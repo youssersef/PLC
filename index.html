@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>محاكي لوحات التحكم الكلاسيكي و PLC – Zelio</title>
+<style>
+:root{--bg:#1d2430;--panel:#f4f2ec;--acc:#1565c0;--red:#e53935;--txt:#1b1b1b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"Cairo","Segoe UI","Tahoma","Noto Sans Arabic","Arial",sans-serif;background:var(--bg);color:#eee;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:none}
+button,select{font-family:inherit}
+#start{position:fixed;inset:0;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:24px;background:radial-gradient(circle at 50% 0,#2c3a52,#141a24);touch-action:auto}
+#start h1{margin:6px 0 2px;font-size:28px}
+#start p{margin:4px 0 18px;color:#b8c4d6;text-align:center}
+.cards{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;max-width:1200px}
+.card{background:#fff;color:#222;border-radius:16px;width:min(520px,92vw);cursor:pointer;box-shadow:0 10px 30px #0008;overflow:hidden;transition:transform .15s}
+.card:hover{transform:translateY(-4px)}
+.card svg{width:100%;height:auto;display:block;background:#ddd}
+.card .ct{padding:12px 16px}
+.card h2{margin:0 0 4px;font-size:20px;color:#0d47a1}
+.card small{color:#555}
+#app{position:fixed;inset:0;display:none;flex-direction:column}
+#top{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#111823;flex-wrap:wrap;border-bottom:1px solid #2b3647}
+#top .ttl{font-weight:700;margin-left:8px;font-size:15px}
+.b{background:#2a3546;color:#eee;border:1px solid #3c4a60;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;white-space:nowrap}
+.b:hover{background:#34445a}.b.on{background:#1565c0;border-color:#64b5f6}
+.b.pw{background:#5a1d1d}.b.pw.on{background:#c62828;box-shadow:0 0 12px #f44}
+.sw{width:22px;height:22px;border-radius:50%;border:2px solid #fff3;cursor:pointer;display:inline-block;vertical-align:middle}
+.sw.sel{border-color:#fff;box-shadow:0 0 0 2px #64b5f6}
+#main{flex:1;display:flex;min-height:0}
+#stage{flex:1;position:relative;background:#2b313b;min-width:0}
+#svg{width:100%;height:100%;display:block;touch-action:none;direction:ltr}
+#side{width:360px;background:#f7f7f4;color:#222;overflow:auto;border-right:1px solid #ccc;touch-action:pan-y;display:flex;flex-direction:column}
+#side h3{margin:0;padding:8px 12px;background:#0d47a1;color:#fff;font-size:15px}
+.sec{padding:8px 12px;border-bottom:1px solid #ddd;font-size:14px}
+.tabs{display:flex}.tabs button{flex:1;padding:8px;border:0;background:#dfe5ee;cursor:pointer;font-weight:700}.tabs button.on{background:#fff;color:#0d47a1;border-bottom:3px solid #0d47a1}
+.step{padding:3px 6px;margin:2px 0;border-radius:6px;background:#eef3e9;font-size:13px;direction:rtl}
+.step.stop{background:#ffe0b2;border:2px solid #fb8c00;font-weight:700}
+.step.ok{background:#e8f5e9}.step.src{background:#ffebee}
+.fault{background:#ffebee;border-right:4px solid #e53935;padding:6px;margin:4px 0;border-radius:4px;font-size:13px}
+.warn{background:#fff8e1;border-right:4px solid #ffa000;padding:6px;margin:4px 0;border-radius:4px;font-size:13px}
+.good{background:#e8f5e9;border-right:4px solid #43a047;padding:6px;margin:4px 0;border-radius:4px;font-size:13px}
+#tip{position:fixed;pointer-events:none;background:#000d;color:#fff;padding:4px 8px;border-radius:6px;font-size:13px;display:none;z-index:50;direction:ltr}
+#flash{position:fixed;inset:0;pointer-events:none;background:#f00;opacity:0;z-index:40;transition:opacity .5s}
+#zoom{position:absolute;left:10px;bottom:10px;display:flex;flex-direction:column;gap:6px}
+#zoom .b{width:40px;height:40px;font-size:20px;padding:0}
+#banner{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#c62828;color:#fff;padding:8px 16px;border-radius:10px;font-weight:700;display:none;box-shadow:0 4px 18px #000a;max-width:90%;text-align:center;z-index:6;pointer-events:none}
+#help,#modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:60;touch-action:auto}
+#help .in,#modal .in{background:#fff;color:#222;max-width:640px;width:92vw;max-height:88vh;overflow:auto;border-radius:14px;padding:18px 22px;line-height:1.8}
+#help h2{margin-top:0;color:#0d47a1}
+.ex{padding:6px 8px;margin:4px 0;border:1px solid #cfd8dc;border-radius:8px;cursor:pointer;background:#fff}
+.ex.on{border-color:#1565c0;background:#e3f2fd}
+.lad{background:#fff;border:1px solid #ccc;border-radius:6px;width:100%;direction:ltr}
+.big{width:100%;padding:10px;font-size:15px;background:#2e7d32;color:#fff;border:0;border-radius:8px;cursor:pointer;margin:6px 0;font-weight:700}
+@media (max-width:820px){#main{flex-direction:column}#side{width:100%;height:42%;border-right:0;border-top:2px solid #0d47a1}#top .ttl{display:none}}
+@keyframes flow{to{stroke-dashoffset:-28}}
+.flow{stroke-dasharray:8 6;animation:flow .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.modes{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.mode{background:#ffffff10;border:1px solid #ffffff30;border-radius:18px;padding:12px 16px 16px}
+.mode>h2{margin:2px 0 10px;text-align:center;font-size:22px;color:#ffe082}
+.mode .card{width:min(380px,92vw)}
+.mode.plc .card{width:min(440px,92vw)}
+#vbtns{display:none}
+#ladder{position:absolute;inset:0;display:none;flex-direction:column;background:#d4d0c8;color:#111;direction:ltr;z-index:4}
+#ltools{background:#ece9d8;border-bottom:1px solid #999;padding:5px}
+.lt{display:flex;flex-wrap:wrap;gap:3px;align-items:center;direction:ltr}
+.lb{background:#fff;border:1px solid #888;border-radius:3px;padding:4px 7px;font:700 13px Arial;cursor:pointer;min-width:34px}
+.lb.on{background:#316ac5;color:#fff;border-color:#163e7a}
+.lb.run{background:#c8e6c9}.lb.run.on{background:#2e7d32;color:#fff}.lb.stp{background:#ffcdd2}.lb.xfer{background:#bbdefb}
+.lsep{margin:0 3px 0 8px;font:12px Tahoma;direction:rtl}
+.lbody{flex:1;display:flex;min-height:0}
+#lgrid{flex:1;overflow:auto;padding:8px;background:#d4d0c8}
+#lsim{width:270px;overflow:auto;background:#ece9d8;border-left:1px solid #999;padding:8px;direction:rtl;font-size:13px}
+.lgt{border-collapse:collapse;background:#fff;box-shadow:0 2px 6px #0004}
+.lgt th{background:#ece9d8;font:11px Arial;color:#555;border:1px solid #bbb;padding:2px}
+.lgt td{padding:0;border:1px dotted #c8c8c8;height:56px}
+.lgt td.lc{width:96px;cursor:pointer}.lgt td.lc:hover{background:#e8f0ff}
+.lgt td.coil{border-left:1px solid #aaa}
+.lgt td.rn{font:11px monospace;color:#777;background:#f3f3f3;padding:0 4px}
+.lgt td.rail,.lgt th.railh{width:8px;background:linear-gradient(90deg,transparent 2px,#222 2px,#222 5px,transparent 5px)}
+.lgt td.rail.on{background:linear-gradient(90deg,transparent 2px,#e53935 2px,#e53935 6px,transparent 6px)}
+.lgt td.cmt{width:180px;font:12px Tahoma;color:#2e7d32;padding:0 4px;direction:rtl}
+.lgt .lcom{width:170px;border:0;border-bottom:1px dashed #bbb;font:12px Tahoma;color:#2e7d32;background:transparent;direction:rtl}
+.lcs{width:96px;height:56px;display:block;overflow:visible}
+.lgt.mini td{height:24px}.lgt.mini td.lc{width:42px}.lgt.mini .lcs{width:42px;height:24.5px}.lgt.mini td.cmt{width:auto;font-size:10px}
+.lgt.mini th{font-size:9px}
+.lcd{background:#b8cf8a;border:4px solid #6d7f4a;border-radius:4px;padding:6px;font:800 15px monospace;color:#1b2a10;direction:ltr;margin-bottom:8px}
+.lcd span{display:inline-block;width:15px;text-align:center}.lcd .inv{background:#1b2a10;color:#c5d9a3}
+.lsec{margin:6px 0;padding:6px;background:#fff;border:1px solid #ccc;border-radius:6px}
+.lio{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0;direction:ltr}
+.lin{border:1px solid #777;border-radius:5px;padding:4px 6px;background:#eee;cursor:pointer;font:700 12px Arial}
+.lin.on{background:#e53935;color:#fff}
+.lq{display:inline-block;border:1px solid #777;border-radius:12px;padding:3px 7px;background:#ddd;font:700 12px Arial}
+.lq.on{background:#ff1744;color:#fff;box-shadow:0 0 8px #f44}.lq.sm{padding:1px 5px;font-size:11px}
+@keyframes spinr{to{transform:rotate(-360deg)}}
+</style>
+</head>
+<body>
+<div id="start">
+  <h1>⚡ محاكي لوحات التحكم الكلاسيكي و PLC</h1>
+  <h4>اعداد EL_GENIUS--SALAH SELMI--MA7MOUD HAMAD</h4>
+  <p>كلية التكنولوجيا والتعليم – قسم هندسة ميكاترونيكس<br>اختار اللوحة اللي عايز تذاكر عليها، وصّل السلوك بين النقط، شغّل الدايرة وشوف الكهربا ماشية إزاي ووقفت فين.</p>
+  <div class="modes">
+  <div class="mode"><h2>🔧 التوصيل الكلاسيك</h2>
+  <div class="cards">
+    <div class="card" id="card1" onclick="selectBoard(1)"><div id="th1"></div><div class="ct"><h2>اللوحة 1: لوحة التحكم الكلاسيكي – 3 فاز</h2><small>L1 / L2 / L3 + N، 3 محطات: STOP، START، Double Push Button، SELECTOR، لمبات، CONTACTOR، OVER LOAD، TIMER، RELAY + موتور 3 فاز</small></div></div>
+    <div class="card" id="card2" onclick="selectBoard(2)"><div id="th2"></div><div class="ct"><h2>اللوحة 2: لوحة دوائر التحكم الكلاسيكية</h2><small>Power and Protection، بارات L1 L2 L3 N PE، لمبات + أميتر وفولتميتر، 3 Emergency Stop، 3 Control Module، 3 Selector، 3 كونتاكتور، 2 أوفرلود، 2 ريلاي، 2 تايمر، PLC</small></div></div>
+  </div>
+</div>
+  <div class="mode plc"><h2>🪜 PLC – Zelio (Ladder)</h2>
+  <div class="cards"><div class="card" id="card3" onclick="selectBoard(3)"><div id="th3"></div><div class="ct"><h2>PLC – Zelio (Ladder)</h2><small>PLC UNIT (I1..I8 + زراير، Relay Outputs Q1..Q8 220 VAC) + PLC TRAINER (POWER UNIT): L1 L2 L3 N، FUSE، MCB، كونتاكتورات K1–K4 (KM1–KM4)، O.L. + موتور 3 فاز يمين/شمال. محرر Ladder زي Zelio Soft 2 + محاكاة.</small></div></div></div>
+  </div>
+  </div>
+</div>
+
+<div id="app">
+  <div id="top">
+    <button class="b" onclick="goHome()">↩ اللوحات</button>
+    <span class="ttl" id="bname"></span>
+    <span id="vbtns"><button class="b on" id="vb1" onclick="setView('wire')">🔌 التوصيل</button> <button class="b" id="vb2" onclick="setView('lad')">🪜 Ladder</button></span>
+    <button class="b pw" id="pwr" onclick="togglePower()">⏻ تشغيل الكهربا</button>
+    <span style="margin:0 4px">لون السلك:</span>
+    <span id="colors"></span>
+    <button class="b" onclick="undo()">↶ تراجع</button>
+    <button class="b" onclick="clearAll()">🗑 مسح الكل</button>
+    <button class="b" onclick="saveLS()">💾 حفظ</button>
+    <button class="b" onclick="loadLS()">📂 استرجاع</button>
+    <button class="b" onclick="exportJSON()">⬇ JSON</button>
+    <button class="b" onclick="document.getElementById('fin').click()">⬆ JSON</button>
+    <input type="file" id="fin" accept=".json,application/json" style="display:none" onchange="importJSON(this)">
+    <button class="b" onclick="showHelp(1)">❓ مساعدة</button>
+  </div>
+  <div id="main">
+    <div id="stage">
+      <svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="banner"></div>
+      <div id="ladder"><div id="ltools"></div><div class="lbody"><div id="lgrid"></div><div id="lsim"></div></div></div>
+      <div id="zoom"><button class="b" onclick="zoomBy(0.8)">+</button><button class="b" onclick="zoomBy(1.25)">−</button><button class="b" onclick="fitView()" style="font-size:14px">⤢</button></div>
+    </div>
+    <div id="side">
+      <div class="tabs"><button id="tb1" class="on" onclick="tab(1)">تتبع التيار</button><button id="tb2" onclick="tab(2)">تمارين</button></div>
+      <div id="pane1"></div>
+      <div id="pane2" style="display:none"></div>
+    </div>
+  </div>
+</div>
+<div id="tip"></div><div id="flash"></div>
+<div id="help" onclick="if(event.target===this)showHelp(0)"><div class="in">
+<h2>إزاي تستخدم المحاكي</h2>
+<b>التوصيل:</b> دوس على نقطة (بنانة) وبعدين دوس على النقطة التانية ← يتحط سلك بينهم. اختار لون السلك من فوق. دوس على أي سلك عشان تمسحه. دوس على مكان فاضي عشان تلغي الاختيار.<br>
+<b>التشغيل:</b> دوس «⏻ تشغيل الكهربا» (في اللوحة 2 لازم الـ C.B. يكون ON والـ Emergency مش مضغوط).<br>
+<b>الزراير:</b> STOP و START وأزرار Double Push Button / Control Module لحظية (اضغط وامسك). السليكتور بيتقلب بضغطة. الطوارئ (Emergency) بتمسك ← دوس تاني عشان تلفها وترجعها. زرار TRIP/RESET في الأوفرلود بيعمل محاكاة لفصل الحمل الزايد. التايمر عليه − و + لضبط الثواني.<br>
+<b>الموتور:</b> أطرافه U1 V1 W1 / W2 U2 V2. وضع «دلتا داخلي» يكفي توصّل U1 V1 W1. لتمرين ستار/دلتا حوّله لـ «أطراف خارجية».<br>
+<b>الجهد:</b> الكويلات واللمبات 220V بين فاز (L) و N. لو اتوصلت بين فازتين (380V) هيظهر تحذير.<br>
+<b>الألوان:</b> الأحمر المتوهج + الشرط المتحركة = في كهربا والتيار ماشي في الاتجاه ده. الأزرق المتحرك = راجع على النيوترال. الرمادي = ميت. البرتقالي = النقطة اللي التيار وقف عندها.<br>
+<b>تتبع التيار:</b> اختار الحمل (كويل/لمبة) ويطلعلك المسار خطوة بخطوة ووقف فين.<br>
+<b>التمارين:</b> اختار تمرين، وصّل، ودوس «اتأكد من توصيلي» ← المحاكي يجرب الدايرة لوحده ويقولك فين الغلط.<br>
+<b>PLC – Zelio (Ladder):</b> وصّل + (24V) ← زرار ← I، وفاز L ← Q ← A1 الكونتاكتور، A2 ← N. افتح «🪜 Ladder»، اختار عنصر (I / i / Q / M / T / كويل [ S R TT) ودوس على الخانة، وصلة رأسية للتوازي. «محاكاة / Run» يشغّل البرنامج و«نقل للـ PLC» يرجعك للتوصيل والـ PLC شغال.<br>
+<b>الموتور:</b> زرار Demo بيلف الموتور يدوي للعرض بس – الاتجاه الحقيقي من تسلسل الفازات على U1 V1 W1.<br>
+<b>التكبير:</b> عجلة الماوس أو قرص بصباعين، والسحب في مكان فاضي لتحريك اللوحة.
+<br><button class="big" onclick="showHelp(0)">تمام 👍</button></div></div>
+
+<script>
+'use strict';
+/* ================= helpers ================= */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const PH=['L1','L2','L3'];
+const WCOL={'#d32f2f':'أحمر','#212121':'أسود','#1565c0':'أزرق','#fbc02d':'أصفر','#2e7d32':'أخضر'};
+let S={board:0,comps:[],cmap:{},TP:{},wires:[],hist:[],now:0,trip:null,color:'#d32f2f',sel:null,quiet:false,net:null,traceLoad:'',hl:new Set(),faults:[],motor:{}};
+
+/* ---------- drawing primitives ---------- */
+function jack(id,x,y,col,live,hl){
+  const f=col==='k'?'#1a1a1a':col==='g'?'#2e7d32':col==='y'?'#f9a825':'#d32f2f';
+  return `<g class="jk" data-term="${id}"><circle cx="${x}" cy="${y}" r="14" fill="transparent"/>`+
+  (hl?`<circle cx="${x}" cy="${y}" r="15" fill="none" stroke="#ff9800" stroke-width="4"/>`:'')+
+  (live?`<circle cx="${x}" cy="${y}" r="14" fill="#ff3d00" opacity=".35"/>`:'')+
+  `<circle cx="${x}" cy="${y}" r="10.5" fill="${f}" stroke="#000" stroke-width="1.2"/><circle cx="${x}" cy="${y}" r="5.5" fill="#555" stroke="#111"/><circle cx="${x}" cy="${y}" r="2.6" fill="#999"/>`+
+  `<circle cx="${x-3}" cy="${y-4}" r="2.5" fill="#fff" opacity=".45"/></g>`;
+}
+function txt(x,y,s,sz=12,fill='#222',w='700',anc='middle'){return `<text x="${x}" y="${y}" font-size="${sz}" fill="${fill}" font-weight="${w}" text-anchor="${anc}" font-family="Arial,sans-serif">${esc(s)}</text>`}
+function pbtn(x,y,r,col,pressed,data,lab){
+  const d=pressed?3:0;
+  return `<g data-btn="${data}" style="cursor:pointer"><circle cx="${x}" cy="${y+4}" r="${r+5}" fill="#222"/><circle cx="${x}" cy="${y}" r="${r+5}" fill="#444" stroke="#111"/>`+
+  `<circle cx="${x}" cy="${y+d}" r="${r}" fill="${col}" stroke="#0006" stroke-width="2"/>`+
+  `<ellipse cx="${x-r*.3}" cy="${y-r*.4+d}" rx="${r*.45}" ry="${r*.25}" fill="#fff" opacity="${pressed?.15:.45}"/>`+
+  (lab?txt(x,y+d+4,lab,10,'#fff'):'')+`</g>`;
+}
+function lampG(x,y,r,col,on){
+  return (on?`<circle cx="${x}" cy="${y}" r="${r+16}" fill="${col}" opacity=".35" filter="url(#glow)"/>`:'')+
+  `<circle cx="${x}" cy="${y}" r="${r+5}" fill="#333" stroke="#111"/><circle cx="${x}" cy="${y}" r="${r}" fill="${on?col:shade(col)}" stroke="#0005" stroke-width="2"/>`+
+  `<ellipse cx="${x-r*.3}" cy="${y-r*.35}" rx="${r*.4}" ry="${r*.22}" fill="#fff" opacity="${on?.8:.3}"/>`;
+}
+function shade(c){return {'#ff1744':'#6d2a2a','#ffea00':'#6b6324','#00e676':'#285c3c','#ff9100':'#704a1e'}[c]||'#555'}
+// horizontal contact symbol between x1..x2 at y
+function contH(x1,x2,y,closed,nc,live,hl){
+  const c=hl?'#ff9800':live?'#e53935':'#333',m=(x1+x2)/2,a=m-12,b=m+12;
+  let s=`<line x1="${x1}" y1="${y}" x2="${a}" y2="${y}" stroke="${c}" stroke-width="2.5"/><line x1="${b}" y1="${y}" x2="${x2}" y2="${y}" stroke="${c}" stroke-width="2.5"/>`;
+  if(nc)s+=`<line x1="${b}" y1="${y}" x2="${b}" y2="${y-11}" stroke="${c}" stroke-width="2"/>`;
+  s+=closed?`<line x1="${a}" y1="${y}" x2="${b}" y2="${y-1}" stroke="${c}" stroke-width="3"/>`:`<line x1="${a}" y1="${y}" x2="${b-2}" y2="${y-(nc?14:12)}" stroke="${c}" stroke-width="3"/>`;
+  s+=`<circle cx="${a}" cy="${y}" r="2.5" fill="${c}"/>`;
+  if(hl)s+=`<circle cx="${m}" cy="${y-4}" r="16" fill="none" stroke="#ff9800" stroke-width="2" stroke-dasharray="4 3"/>`;
+  return s;
+}
+function contV(x,y1,y2,closed,live,hl){
+  const c=hl?'#ff9800':live?'#e53935':'#333',m=(y1+y2)/2,a=m-12,b=m+12;
+  return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${a}" stroke="${c}" stroke-width="2.5"/><line x1="${x}" y1="${b}" x2="${x}" y2="${y2}" stroke="${c}" stroke-width="2.5"/>`+
+  (closed?`<line x1="${x}" y1="${a}" x2="${x}" y2="${b}" stroke="${c}" stroke-width="3"/>`:`<line x1="${x}" y1="${a}" x2="${x-11}" y2="${b-3}" stroke="${c}" stroke-width="3"/>`);
+}
+function coilG(x,y,on,lab='A1  A2'){
+  return `<rect x="${x-22}" y="${y-12}" width="44" height="24" rx="3" fill="${on?'#ff5252':'#eceff1'}" stroke="#333" stroke-width="2"/>`+(on?`<rect x="${x-26}" y="${y-16}" width="52" height="32" rx="5" fill="#ff1744" opacity=".3"/>`:'')+txt(x,y+4,on?'ON':'coil',10,on?'#fff':'#555');
+}
+
+/* ================= component definitions ================= */
+// terms: [name,x,y,color]; edges(c) -> [a,b,closed,label|null]; loads(c)->[[a,b,kind]]
+const DEF={
+ rail:{terms:c=>{const a=[];for(let i=0;i<c.n;i++)a.push(['p'+i,c.w*(i+.5)/c.n,20,c.src==='N'?'k':c.src==='PE'?'g':'r']);return a},
+   edges:c=>{const e=[];for(let i=1;i<c.n;i++)e.push(['p'+(i-1),'p'+i,true,null]);return e},
+   draw:c=>{const col={L1:'#8d6e63',L2:'#212121',L3:'#78909c',N:'#1e88e5',PE:'#43a047'}[c.src];return `<rect x="0" y="12" width="${c.w}" height="16" rx="4" fill="${col}" stroke="#0006"/><rect x="0" y="13" width="${c.w}" height="4" fill="#fff" opacity=".25"/>`+txt(-22,25,c.src,16,'#0d2b5e','800')+txt(c.w+22,25,c.src,16,'#0d2b5e','800')}},
+ stop:{w:110,h:178,title:'STOP',terms:()=>[['1',30,150,'r'],['2',80,150,'k']],btns:()=>[['b','nc']],
+   edges:c=>[['1','2',!c.st.b,'NC']],
+   draw:c=>pbtn(55,66,25,'#e53935',c.st.b,c.id+':b','STOP')+txt(55,112,'NC',11,'#c62828')+contH(30,80,128,!c.st.b,1,live(c,'1'),hlE(c,'1','2'))},
+ start:{w:110,h:178,title:'START',terms:()=>[['3',30,150,'r'],['4',80,150,'k']],btns:()=>[['b','no']],
+   edges:c=>[['3','4',!!c.st.b,'NO']],
+   draw:c=>pbtn(55,66,25,'#43a047',c.st.b,c.id+':b','START')+txt(55,112,'NO',11,'#2e7d32')+contH(30,80,128,!!c.st.b,0,live(c,'3'),hlE(c,'3','4'))},
+ dpb:{w:150,h:178,terms:()=>[['13',22,150,'r'],['14',62,150,'k'],['21',90,150,'r'],['22',130,150,'k']],btns:()=>[['on','no'],['off','nc']],
+   edges:c=>[['13','14',!!c.st.on,'NO'],['21','22',!c.st.off,'NC']],
+   draw:c=>`<rect x="18" y="34" width="114" height="64" rx="12" fill="#cfd8dc" stroke="#555"/>`+pbtn(48,66,19,'#43a047',c.st.on,c.id+':on','ON')+pbtn(102,66,19,'#e53935',c.st.off,c.id+':off','OFF')+
+     txt(42,114,'NO',10,'#2e7d32')+txt(110,114,'NC',10,'#c62828')+contH(22,62,130,!!c.st.on,0,live(c,'13'),hlE(c,'13','14'))+contH(90,130,130,!c.st.off,1,live(c,'21'),hlE(c,'21','22'))},
+ sel:{w:120,h:178,title:'SELECTOR',terms:()=>[['13',18,150,'r'],['14',48,150,'k'],['23',74,150,'r'],['24',104,150,'k']],
+   edges:c=>[['13','14',!c.st.p,'I (NO)'],['23','24',!!c.st.p,'II (NO)']],
+   draw:c=>`<g data-btn="${c.id}:p" style="cursor:pointer"><circle cx="60" cy="64" r="28" fill="#333" stroke="#000"/><circle cx="60" cy="64" r="22" fill="#111"/><rect x="55" y="40" width="10" height="48" rx="4" fill="#eee" transform="rotate(${c.st.p?45:-45} 60 64)"/></g>`+txt(26,40,'I',13)+txt(94,40,'II',13)+
+     contH(18,48,128,!c.st.p,0,live(c,'13'),hlE(c,'13','14'))+contH(74,104,128,!!c.st.p,0,live(c,'23'),hlE(c,'23','24'))},
+ lamp:{w:90,h:150,terms:()=>[['X1',25,124,'r'],['X2',65,124,'k']],loads:()=>[['X1','X2','lamp']],
+   draw:c=>lampG(45,62,22,c.col,c.st.on)},
+ contactor:{w:250,h:232,title:'CONTACTOR',terms:()=>[['1',30,48,'r'],['3',70,48,'r'],['5',110,48,'r'],['2',30,200,'k'],['4',70,200,'k'],['6',110,200,'k'],['A1',165,48,'r'],['A2',220,48,'k'],['13',165,140,'r'],['14',220,140,'k'],['21',165,200,'r'],['22',220,200,'k']],
+   loads:()=>[['A1','A2','coil']],
+   edges:c=>[['1','2',!!c.st.on,'main'],['3','4',!!c.st.on,'main'],['5','6',!!c.st.on,'main'],['13','14',!!c.st.on,'NO'],['21','22',!c.st.on,'NC']],
+   draw:c=>[0,1,2].map(i=>contV(30+40*i,62,186,!!c.st.on,live(c,['1','3','5'][i]),hlE(c,['1','3','5'][i],['2','4','6'][i]))).join('')+`<line x1="22" y1="124" x2="118" y2="124" stroke="#555" stroke-dasharray="4 3"/>`+
+     coilG(192,88,c.st.on)+txt(192,118,'NO',10,'#2e7d32')+contH(165,220,140,!!c.st.on,0,live(c,'13'),hlE(c,'13','14'))+txt(192,178,'NC',10,'#c62828')+contH(165,220,200,!c.st.on,1,live(c,'21'),hlE(c,'21','22'))},
+ ol:{w:250,h:232,title:'OVER LOAD',terms:()=>[['1',30,48,'r'],['3',70,48,'r'],['5',110,48,'r'],['2',30,200,'k'],['4',70,200,'k'],['6',110,200,'k'],['95',165,48,'r'],['96',220,48,'k'],['97',165,112,'r'],['98',220,112,'k']],
+   edges:c=>[['1','2',true,'heater'],['3','4',true,'heater'],['5','6',true,'heater'],['95','96',!c.st.t,'NC'],['97','98',!!c.st.t,'NO']],
+   draw:c=>[0,1,2].map(i=>{const x=30+40*i;return `<line x1="${x}" y1="62" x2="${x}" y2="186" stroke="${live(c,['1','3','5'][i])?'#e53935':'#333'}" stroke-width="2.5"/><path d="M${x} 105 h8 v14 h-16 v14 h8" fill="none" stroke="#333" stroke-width="2.5"/>`}).join('')+
+     txt(192,76,'NC',10,'#c62828')+contH(165,220,48,!c.st.t,1,live(c,'95'),hlE(c,'95','96'))+txt(192,140,'NO',10,'#2e7d32')+contH(165,220,112,!!c.st.t,0,live(c,'97'),hlE(c,'97','98'))+
+     `<g data-btn="${c.id}:t" style="cursor:pointer"><rect x="148" y="158" width="88" height="34" rx="6" fill="${c.st.t?'#e53935':'#1565c0'}" stroke="#000"/>`+txt(192,180,c.st.t?'RESET':'TRIP',13,'#fff')+`</g>`+(c.st.t?txt(192,214,'TRIPPED!',11,'#c62828'):'')},
+ timer:{w:250,h:200,title:'TIMER',terms:()=>[['A1',165,48,'r'],['A2',220,48,'k'],['55',165,108,'r'],['56',220,108,'k'],['67',165,166,'r'],['68',220,166,'k']],
+   loads:()=>[['A1','A2','coil']],
+   edges:c=>[['55','56',!c.st.done,'NC (delayed)'],['67','68',!!c.st.done,'NO (delayed)']],
+   draw:c=>{const p=c.st.on?Math.min(1,(S.now-c.st.t0)/(c.d*1000)):0;
+     return `<rect x="16" y="36" width="112" height="56" rx="6" fill="#263238"/>`+txt(72,60,c.st.on?((Math.max(0,c.d-(S.now-c.st.t0)/1000)).toFixed(1)+' s'):(c.d+' s'),20,'#76ff03','700')+txt(72,82,'ON-DELAY',10,'#b0bec5')+
+     `<rect x="16" y="98" width="112" height="8" rx="3" fill="#ccc"/><rect x="16" y="98" width="${112*p}" height="8" rx="3" fill="#ff7043"/>`+
+     `<g data-btn="${c.id}:minus" style="cursor:pointer"><rect x="16" y="116" width="50" height="30" rx="6" fill="#455a64"/>${txt(41,137,'−',20,'#fff')}</g><g data-btn="${c.id}:plus" style="cursor:pointer"><rect x="78" y="116" width="50" height="30" rx="6" fill="#455a64"/>${txt(103,137,'+',20,'#fff')}</g>`+
+     coilG(72,172,c.st.on)+txt(192,90,'NC ⌛',10,'#c62828')+contH(165,220,108,!c.st.done,1,live(c,'55'),hlE(c,'55','56'))+txt(192,148,'NO ⌛',10,'#2e7d32')+contH(165,220,166,!!c.st.done,0,live(c,'67'),hlE(c,'67','68'))}},
+ relay:{w:200,h:200,title:'RELAY',terms:()=>[['A1',50,48,'r'],['A2',150,48,'k'],['13',50,118,'r'],['14',150,118,'k'],['21',50,172,'r'],['22',150,172,'k']],
+   loads:()=>[['A1','A2','coil']],
+   edges:c=>[['13','14',!!c.st.on,'NO'],['21','22',!c.st.on,'NC']],
+   draw:c=>coilG(100,76,c.st.on)+txt(100,104,'NO',10,'#2e7d32')+contH(50,150,118,!!c.st.on,0,live(c,'13'),hlE(c,'13','14'))+txt(100,158,'NC',10,'#c62828')+contH(50,150,172,!c.st.on,1,live(c,'21'),hlE(c,'21','22'))},
+ motor:{w:300,h:250,title:'MOTOR 3~',terms:()=>[['U1',30,50,'r'],['V1',75,50,'r'],['W1',120,50,'r'],['W2',30,140,'k'],['U2',75,140,'k'],['V2',120,140,'k']],
+   edges:c=>c.mode==='delta'?[['U1','W2',true,null],['V1','U2',true,null],['W1','V2',true,null]]:c.mode==='star'?[['U2','V2',true,null],['V2','W2',true,null]]:[],
+   draw:c=>{const m=S.motor||{};const run=m.run,dir=m.dir;
+     const st=run?`style="transform-origin:225px 110px;animation:${dir==='CW'?'spin':'spinr'} ${m.mode==='star'?1.6:.7}s linear infinite"`:'';
+     return `<circle cx="225" cy="110" r="58" fill="${run?'#1e88e5':'#90a4ae'}" stroke="#263238" stroke-width="4"/><g ${st}>`+[0,60,120,180,240,300].map(a=>`<rect x="221" y="58" width="8" height="40" rx="3" fill="#eceff1" transform="rotate(${a} 225 110)"/>`).join('')+`</g><circle cx="225" cy="110" r="10" fill="#263238"/>`+
+     txt(225,190,run?(dir==='CW'?'⟳ CW يمين':'⟲ CCW شمال'):(m.single?'⚠ نقص فاز':'واقف'),15,run?'#0d47a1':m.single?'#c62828':'#555')+txt(225,208,run?(m.mode==='star'?'Star ⋆ (سرعة بدء)':'Delta △'):'',12,'#333')+
+     `<line x1="30" y1="62" x2="30" y2="128" stroke="#999"/><line x1="75" y1="62" x2="75" y2="128" stroke="#999"/><line x1="120" y1="62" x2="120" y2="128" stroke="#999"/>`+
+     `<g data-btn="${c.id}:mode" style="cursor:pointer"><rect x="10" y="172" width="135" height="30" rx="6" fill="#37474f"/>`+txt(77,192,{delta:'دلتا داخلي △',star:'ستار داخلي ⋆',ext:'أطراف خارجية (6)'}[c.mode],12,'#fff')+`</g>`+txt(77,222,'اضغط لتغيير التوصيلة',10,'#666')}},
+ master:{w:200,h:110,title:'Main Switch',terms:()=>[],
+   draw:c=>`<g data-btn="${c.id}:on" style="cursor:pointer"><rect x="20" y="36" width="160" height="56" rx="28" fill="${c.st.on?'#c62828':'#546e7a'}" stroke="#000"/><circle cx="${c.st.on?152:48}" cy="64" r="24" fill="#fafafa" stroke="#333"/>`+txt(100,70,c.st.on?'ON':'OFF',16,'#fff')+`</g>`},
+ cb:{w:150,h:200,title:'C.B.',terms:()=>[],
+   draw:c=>`<g data-btn="${c.id}:on" style="cursor:pointer"><rect x="35" y="34" width="80" height="140" rx="6" fill="#eceff1" stroke="#333" stroke-width="2"/><rect x="58" y="60" width="34" height="80" rx="4" fill="#cfd8dc" stroke="#555"/><rect x="61" y="${c.st.on?63:103}" width="28" height="34" rx="3" fill="${c.st.on?'#c62828':'#37474f'}"/>`+txt(75,155,c.st.on?'ON  I':'OFF  O',12,c.st.on?'#c62828':'#333')+`</g>`+txt(75,192,'3P 16A',10,'#555')},
+ plamp:{w:110,h:200,title:'Power',terms:()=>[],draw:c=>lampG(55,95,24,'#00e676',powerOn())+txt(55,160,'POWER',11)},
+ olind:{w:110,h:200,title:'Over Load',terms:()=>[],draw:c=>lampG(55,95,24,'#ff9100',S.comps.some(x=>x.type==='ol'&&x.st.t))+txt(55,160,'O/L',11)},
+ mainEs:{w:130,h:200,title:'Emergency',terms:()=>[],draw:c=>esG(65,95,c,'lat')},
+ es:{w:150,h:178,title:'Emergency Stop',terms:()=>[['1',45,150,'r'],['2',105,150,'k']],btns:()=>[['lat','nc','latch']],
+   edges:c=>[['1','2',!c.st.lat,'NC']],
+   draw:c=>esG(75,70,c,'lat')+txt(75,120,'NC',10,'#c62828')+contH(45,105,130,!c.st.lat,1,live(c,'1'),hlE(c,'1','2'))},
+ amm:{w:100,h:150,title:'A',terms:()=>[['+',28,126,'r'],['-',72,126,'k']],edges:c=>[['+','-',true,'A']],draw:c=>meter(50,64,'A',(c.val||0).toFixed(2))},
+ volt:{w:100,h:150,title:'V',terms:()=>[['+',28,126,'r'],['-',72,126,'k']],loads:()=>[['+','-','vm']],draw:c=>meter(50,64,'V',String(c.val||0))},
+ plc:{w:720,h:260,title:'PLC',terms:()=>{const a=[];for(let i=0;i<8;i++)a.push(['I0.'+i,40+i*30,215,'r']);a.push(['COM',40+8*30,215,'k']);for(let i=0;i<6;i++)a.push(['Q0.'+i,470+i*36,215,'r']);a.push(['COMQ',470+6*36,215,'k']);return a},
+   draw:c=>`<rect x="10" y="28" width="300" height="214" rx="6" fill="none" stroke="#1565c0" stroke-width="2"/>`+txt(160,48,'Input',14,'#0d47a1')+
+     `<rect x="320" y="28" width="120" height="214" rx="6" fill="#37474f" stroke="#000"/>`+txt(380,52,'Main Unit',13,'#fff')+`<rect x="335" y="62" width="90" height="46" fill="#1b5e20"/>`+txt(380,90,'CPU',16,'#b9f6ca')+
+     txt(352,130,'RUN',10,'#fff')+`<circle cx="352" cy="142" r="6" fill="#2e7d32"/>`+txt(408,130,'STOP',10,'#fff')+`<circle cx="408" cy="142" r="6" fill="#ffb300"/>`+txt(380,180,'برمجة الـ PLC',12,'#ffeb3b')+txt(380,198,'قريبًا',12,'#ffeb3b')+
+     `<rect x="450" y="28" width="260" height="214" rx="6" fill="none" stroke="#1565c0" stroke-width="2"/>`+txt(580,48,'Outputs',14,'#0d47a1')+
+     Array.from({length:8},(_,i)=>`<circle cx="${40+i*30}" cy="90" r="6" fill="#4e342e"/>`+txt(40+i*30,192,'I0.'+i,9)).join('')+txt(280,192,'COM',9)+
+     Array.from({length:6},(_,i)=>`<circle cx="${470+i*36}" cy="90" r="6" fill="#4e342e"/>`+txt(470+i*36,192,'Q0.'+i,9)).join('')+txt(686,192,'COM',9)+txt(160,140,'(عرض فقط في النسخة دي)',11,'#777','400')}
+};
+function esG(x,y,c,b){const l=c.st[b];return `<g data-btn="${c.id}:${b}" style="cursor:pointer"><circle cx="${x}" cy="${y}" r="38" fill="#fdd835" stroke="#555"/><circle cx="${x}" cy="${y+5}" r="27" fill="#7f0000"/><circle cx="${x}" cy="${y+(l?4:0)}" r="27" fill="#d50000" stroke="#600" stroke-width="2"/><ellipse cx="${x-8}" cy="${y-9+(l?4:0)}" rx="11" ry="6" fill="#fff" opacity=".4"/>`+txt(x,y+(l?8:4),l?'⟲':'',16,'#fff')+`</g>`+txt(x,y+52,l?'مضغوط – لف للرجوع':'',10,'#c62828','400')}
+function meter(x,y,u,v){return `<rect x="${x-38}" y="${y-36}" width="76" height="72" rx="6" fill="#fafafa" stroke="#333" stroke-width="2"/><path d="M${x-28} ${y+4} A30 30 0 0 1 ${x+28} ${y+4}" fill="none" stroke="#999"/>`+txt(x,y-12,u,14,'#0d47a1')+`<rect x="${x-30}" y="${y+8}" width="60" height="22" fill="#263238"/>`+txt(x,y+24,v,13,'#76ff03')}
+
+/* ================= boards ================= */
+function C(type,id,label,x,y,extra){return Object.assign({type,id,label,x,y,st:{}},extra||{})}
+function board1(){
+  const a=[];
+  ['L1','L2','L3','N'].forEach((p,i)=>a.push(C('rail',p,p,90,22+i*36,{src:p,n:28,w:1740,h:40})));
+  for(let s=0;s<3;s++){const ox=30+s*530,oy=190,n=s+1;
+    a.push(C('stop','S'+n+'STOP','STOP '+n,ox,oy),C('start','S'+n+'START','START '+n,ox+116,oy),C('dpb','S'+n+'DPB','Double Push Button '+n,ox+232,oy,{title:'Double Push Button'}),C('sel','S'+n+'SEL','SELECTOR '+n,ox+388,oy));
+    [['RED','#ff1744'],['YELLOW','#ffea00'],['GREEN','#00e676']].forEach((l,i)=>a.push(C('lamp','S'+n+l[0],l[0]+' '+n,ox+i*98,oy+190,{col:l[1],title:l[0]})));
+    a.push(C('contactor','K'+n,'K'+n,ox,oy+352),C('ol','F'+n,'F'+n,ox+256,oy+352),C('timer','T'+n,'T'+n,ox,oy+596,{d:5}),C('relay','R'+n,'R'+n,ox+256,oy+596));
+  }
+  a.push(C('motor','M','M',1610,190,{mode:'delta'}),C('master','MS','تشغيل الكهربا',1610,460,{title:'تشغيل الكهربا (Main)'}));
+  return {comps:a,vb:[0,0,1940,1020],name:'لوحة التحكم الكلاسيكي – 3 فاز',bg:bg1};
+}
+function bg1(){
+  let s=`<rect x="8" y="6" width="1924" height="1006" rx="14" fill="#f4f2ec" stroke="#9e9e9e" stroke-width="3"/>`;
+  for(let i=0;i<3;i++){const ox=30+i*530;s+=`<rect x="${ox-12}" y="176" width="526" height="824" rx="8" fill="none" stroke="#1565c0" stroke-width="3"/>`+txt(ox+460,368,'STATION '+(i+1),15,'#1565c0','800')+`<text x="${ox+400}" y="420" font-size="13" fill="#555" text-anchor="middle" direction="rtl">محطة ${i+1}</text>`;}
+  s+=`<rect x="1598" y="176" width="324" height="824" rx="8" fill="none" stroke="#212121" stroke-width="3"/>`;
+  s+=`<foreignObject x="1610" y="590" width="300" height="400"><div xmlns="http://www.w3.org/1999/xhtml" style="direction:rtl;font:14px Tahoma,Arial;color:#333;line-height:1.7"><b style="color:#0d47a1">ملاحظات:</b><br>• الكويلات واللمبات 220V بين L و N.<br>• الخط N (النيوترال) مضاف للتدريب.<br>• الموتور افتراضي (U V W) عشان توصّل دايرة القوى.<br>• تسلسل L1-L2-L3 على U1-V1-W1 = CW، بدّل فازتين = CCW.</div></foreignObject>`;
+  [[20,20],[1916,20],[20,996],[1916,996]].forEach(p=>s+=`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#bbb" stroke="#777"/>`);
+  return s;
+}
+function board2(){
+  const a=[];
+  a.push(C('plc','PLC','PLC',20,100));
+  a.push(C('lamp','LR1','Lamp Red 1',770,140,{col:'#ff1744',title:'RED'}),C('lamp','LR2','Lamp Red 2',866,140,{col:'#ff1744',title:'RED'}),C('amm','AM','Ammeter',962,140,{title:'A'}));
+  a.push(C('lamp','LO','Lamp Orange',1090,140,{col:'#ff9100',title:'ORANGE'}),C('lamp','LG','Lamp Green',1186,140,{col:'#00e676',title:'GREEN'}),C('volt','VM','Voltmeter',1282,140,{title:'V'}));
+  a.push(C('cb','CB','C.B.',1420,124),C('plamp','PL','Power',1576,124),C('olind','OLI','Over Load',1692,124),C('mainEs','MES','Emergency',1808,124));
+  ['L1','L2','L3','N','PE'].forEach((p,i)=>a.push(C('rail',p,p,90,392+i*34,{src:p,n:30,w:1880,h:40})));
+  for(let i=0;i<3;i++)a.push(C('es','ES'+(i+1),'Emergency Stop '+(i+1),30+i*160,590));
+  for(let i=0;i<3;i++)a.push(C('dpb','CM'+(i+1),'Control Module '+(i+1),530+i*160,590,{title:'ON/OFF'}));
+  for(let i=0;i<3;i++)a.push(C('sel','SS'+(i+1),'Selector Switch '+(i+1),1030+i*130,590,{title:'Selector'}));
+  for(let i=0;i<3;i++)a.push(C('contactor','K'+(i+1),'K'+(i+1),30+i*256,820));
+  for(let i=0;i<2;i++)a.push(C('ol','F'+(i+1),'F'+(i+1),798+i*256,820));
+  for(let i=0;i<2;i++)a.push(C('relay','R'+(i+1),'R'+(i+1),1310+i*206,820));
+  for(let i=0;i<2;i++)a.push(C('timer','T'+(i+1),'T'+(i+1),1722+i*256,820,{d:5}));
+  a.push(C('motor','M','M',1440,570,{mode:'delta'}));
+  return {comps:a,vb:[0,0,2250,1070],name:'لوحة دوائر التحكم الكلاسيكية',bg:bg2};
+}
+function bg2(){
+  let s=`<rect x="6" y="4" width="2238" height="1060" rx="14" fill="#f4f2ec" stroke="#9e9e9e" stroke-width="3"/>`;
+  s+=`<text x="1125" y="36" font-size="26" font-weight="800" fill="#0d2b5e" text-anchor="middle" direction="rtl" font-family="Tahoma,Arial">كلية التكنولوجيا والتعليم</text><text x="1125" y="64" font-size="20" fill="#0d47a1" text-anchor="middle" direction="rtl" font-family="Tahoma,Arial">قسم تكنولوجيا الكهرباء</text><text x="1125" y="90" font-size="20" font-weight="700" fill="#b71c1c" text-anchor="middle" direction="rtl" font-family="Tahoma,Arial">دوائر التحكم الكلاسيكية</text>`;
+  const box=(x,y,w,h,t,c='#1565c0')=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="none" stroke="${c}" stroke-width="3"/><rect x="${x+w/2-t.length*4.6-8}" y="${y-11}" width="${t.length*9.2+16}" height="22" fill="#f4f2ec"/>`+txt(x+w/2,y+5,t,15,c,'800');
+  s+=box(12,96,736,272,'PLC')+box(760,124,236,190,'Lamp')+box(1080,124,316,190,'Lamp')+box(1410,110,826,222,'Power and Protection','#212121');
+  s+=box(18,576,484,206,'Emergency Stop')+box(518,576,484,206,'Control Module')+box(1018,576,404,206,'Selector Switch')+box(1430,556,320,272,'Motor (virtual)','#212121');
+  s+=box(18,806,766,250,'CONTACTOR')+box(786,806,516,250,'OVER LOAD')+box(1300,806,416,250,'RELAY')+box(1712,806,522,250,'TIMER');
+  return s;
+}
+const BOARDS={1:board1,2:board2};
+
+/* ================= setup ================= */
+function initState(c){
+  const st={};
+  if(c.type==='master'||c.type==='cb')st.on=false;
+  if(c.type==='plcu')st.pw=false;if(c.type==='pwu')st.mcb=false;
+  return st;
+}
+function buildBoard(n){
+  const B=BOARDS[n]();S.board=n;S.B=B;S.comps=B.comps;S.cmap={};S.TP={};
+  for(const c of S.comps){const d=DEF[c.type];c.w=c.w||d.w;c.h=c.h||d.h;c.st=initState(c);S.cmap[c.id]=c;
+    for(const t of d.terms(c)){const id=c.id+'.'+t[0];S.TP[id]={id,c,n:t[0],x:c.x+t[1],y:c.y+t[2],col:t[3],src:c.type==='rail'?c.src:(t[4]||null)}}}
+}
+function powerOn(){if(S.board===1)return !!(S.cmap.MS&&S.cmap.MS.st.on);if(S.board===3)return !!(S.cmap.PU&&S.cmap.PU.st.mcb);const cb=S.cmap.CB,es=S.cmap.MES;return !!(cb&&cb.st.on&&!(es&&es.st.lat))}
+function setPower(v){if(S.board===1)S.cmap.MS.st.on=v;else if(S.board===3){S.cmap.PU.st.mcb=v;if(v)S.cmap.PLC.st.pw=true}else{S.cmap.CB.st.on=v;if(v)S.cmap.MES.st.lat=false}if(v)S.trip=null}
+
+/* ================= solver ================= */
+function allEdges(){const E=[];for(const c of S.comps){const d=DEF[c.type];if(!d.edges)continue;for(const e of d.edges(c))E.push({a:c.id+'.'+e[0],b:c.id+'.'+e[1],closed:e[2],name:e[3],c,ta:e[0],tb:e[1]})}return E}
+function buildNets(skipComp){
+  const par={};const f=x=>{while(par[x]!==undefined&&par[x]!==x){par[x]=par[par[x]]!==undefined?par[par[x]]:par[x];x=par[x]}return x};
+  for(const id in S.TP)par[id]=id;
+  const U=(a,b)=>{a=f(a);b=f(b);if(a!==b)par[a]=b};
+  for(const w of S.wires)if(S.TP[w.a]&&S.TP[w.b])U(w.a,w.b);
+  for(const e of allEdges())if(e.closed&&e.c.id!==skipComp)U(e.a,e.b);
+  const src={};const p=powerOn();
+  for(const id in S.TP){const s=S.TP[id].src;if(s&&(s==='P24'?plcOn():p)){const r=f(id);(src[r]=src[r]||new Set()).add(s==='PE'?'N':s)}}
+  return {f,src,root:id=>f(id),srcOf:id=>{const s=src[f(id)];return s?[...s][0]:null},srcSet:id=>src[f(id)]};
+}
+function loadEval(N,a,b){const sa=N.srcOf(a),sb=N.srcOf(b);
+  const pa=PH.includes(sa),pb=PH.includes(sb);
+  if((pa&&sb==='N')||(pb&&sa==='N'))return {on:true,v:220};
+  if(pa&&pb&&sa!==sb)return {on:true,v:380};
+  return {on:false,half:(pa||pb)&&!sa!==!sb, sa,sb};
+}
+function trip(msg){
+  if(S.board===1)S.cmap.MS.st.on=false;else if(S.board===3)S.cmap.PU.st.mcb=false;else S.cmap.CB.st.on=false;
+  S.trip={msg};
+  for(const c of S.comps)if('on' in c.st&&c.type!=='master'&&c.type!=='cb'){c.st.on=false;c.st.done=false}
+  if(!S.quiet)flash();
+}
+function solve(){
+  let N;
+  for(let it=0;it<40;it++){
+    N=buildNets();
+    if(powerOn()){
+      for(const r in N.src){const s=N.src[r];if(s.size>1){const arr=[...s];
+        const both=S.comps.filter(c=>c.type==='contactor'&&c.st.on);
+        let m=arr.includes('P24')?`قصر: الـ +24V DC بتاع الـ PLC اتوصل على ${arr.filter(x=>x!=='P24').join(' و ')} (220V) – ممنوع توصّل 24V على فاز أو نيوترال!`:arr.includes('N')?`قصر (Short Circuit) بين ${arr.filter(x=>x!=='N').join(' و ')} و N – فاز اتوصل على النيوترال مباشرة من غير حمل!`:`قصر (Short Circuit) بين الفازات ${arr.join(' و ')} – فازتين اتقابلوا من غير حمل!`;
+        if(both.length>=2&&!arr.includes('N'))m+=` ⚠ الكونتاكتورات ${both.map(c=>c.label).join(' و ')} اشتغلوا مع بعض (Forward و Reverse مع بعض من غير Interlock؟)`;
+        trip(m);N=buildNets();break}}
+    }
+    let ch=false;
+    if(S.board===3&&plcStep(N))ch=true;
+    for(const c of S.comps){const d=DEF[c.type];
+      if(c.type==='contactor'||c.type==='relay'||c.type==='timer'){
+        const r=loadEval(N,c.id+'.A1',c.id+'.A2');
+        if(!!c.st.on!==r.on){c.st.on=r.on;ch=true;if(c.type==='timer')c.st.t0=S.now}
+        c.st.v=r.v;
+        if(c.type==='timer'){const dn=!!(c.st.on&&S.now-c.st.t0>=c.d*1000-1);if(dn!==!!c.st.done){c.st.done=dn;ch=true}}
+      }}
+    if(!ch)break;
+  }
+  finalize(N);
+}
+function finalize(N){
+  S.net=N;const F=[];
+  if(S.trip)F.push(['fault','⚡ البريكر فصل (Trip): '+S.trip.msg]);
+  if(!powerOn()&&!S.trip)F.push(['warn',S.board===3?'الكهربا مفصولة – شغّل الـ MCB 3P في الـ POWER UNIT (أو «تشغيل الكهربا»).':S.board===1?'الكهربا مفصولة – دوس «تشغيل الكهربا».':'الكهربا مفصولة – شغّل الـ C.B. واتأكد إن الـ Emergency مش مضغوط.']);
+  const wired=id=>S.wires.some(w=>w.a===id||w.b===id);
+  if(S.board===3){if(!plcOn())F.push(['warn','الـ PLC مطفي – شغّل POWER في الـ PLC UNIT.']);else if(!S.plc.run)F.push(['warn','الـ PLC في وضع STOP – افتح «🪜 Ladder» ودوس «محاكاة / Run» أو «نقل للـ PLC».']);
+    for(let n=1;n<=8;n++){const s=N.srcOf('PLC.I'+n);if(PH.includes(s)||s==='N')F.push(['fault',`⚠ دخل I${n} واصله ${s} (220V AC)! دخول الـ PLC دي 24V DC بس – وصّلها من + (24V) عن طريق زرار.`])}}
+  for(const c of S.comps){const d=DEF[c.type];if(!d.loads)continue;
+    for(const l of d.loads(c)){const a=c.id+'.'+l[0],b=c.id+'.'+l[1];const r=loadEval(N,a,b);
+      if(l[2]==='lamp')c.st.on=r.on;
+      if(l[2]==='vm'){c.val=r.on?r.v:0;continue}
+      if(r.on&&r.v===380)F.push(['warn',`⚠ ${c.label}: متوصل على 380V (فاز–فاز) – الكويل/اللمبة دي 220V لازم تبقى بين L و N!`]);
+      if(!r.on&&powerOn()){const pa=PH.includes(r.sa),pb=PH.includes(r.sb);
+        if((pa&&!r.sb&&wired(b))||(pb&&!r.sa&&wired(a)))F.push(['warn',`${c.label}: واصلها فاز من ناحية بس الناحية التانية مش واصلة N (مفيش نيوترال/الدايرة مفتوحة).`]);
+        else if((pa&&!wired(b))||(pb&&!wired(a)))F.push(['warn',`${c.label}: الفاز واصل لـ ${pa?l[0]:l[1]} بس الطرف ${pa?l[1]:l[0]} مش متوصل بـ N.`]);}
+    }}
+  // motor
+  const M=S.cmap.M;const m={run:false};
+  if(M){const ph=t=>{const s=N.srcOf('M.'+t);return PH.includes(s)?s:null};
+    const ends=[['U1','U2'],['V1','V2'],['W1','W2']];
+    const tops=['U1','V1','W1'].map(ph);
+    const delta=ends.every(e=>ph(e[0])&&ph(e[1])&&ph(e[0])!==ph(e[1]));
+    const sp=N.root('M.U2');const star=new Set(tops).size===3&&!tops.includes(null)&&N.root('M.V2')===sp&&N.root('M.W2')===sp&&!N.srcOf('M.U2');
+    if(delta||star){m.run=true;m.mode=delta?'delta':'star';const idx=tops.map(p=>PH.indexOf(p));m.dir=((idx[1]-idx[0]+3)%3===1)?'CW':'CCW'}
+    else{const any=['U1','V1','W1','U2','V2','W2'].some(t=>ph(t));if(any){m.single=true;F.push(['fault','⚠ الموتور: نقص فاز (Single Phasing) – الموتور مش واصله 3 فازات صح. راجع دايرة القوى (1-3-5 → 2-4-6 → U V W).'+(M.mode==='ext'?' (الموتور على وضع أطراف خارجية: لازم توصّل ستار أو دلتا)':'')])}}
+  }
+  S.motor=m;
+  // ammeter
+  const A=S.cmap.AM;if(A){A.val=0;if(powerOn()){const N2=buildNets('AM');const side=N2.srcOf('AM.+')?'AM.-':'AM.+';
+    if(!(N2.srcOf('AM.+')&&N2.srcOf('AM.-'))){const r=N2.root(side);let I=0;for(const c of S.comps){const d=DEF[c.type];if(!d.loads)continue;for(const l of d.loads(c)){if(l[2]==='vm')continue;if((N2.root(c.id+'.'+l[0])===r||N2.root(c.id+'.'+l[1])===r)&&c.st.on)I+=l[2]==='lamp'?0.27:0.12}}
+      if(m.run&&['U1','V1','W1'].some(t=>N2.root('M.'+t)===r))I+=m.mode==='star'?1.1:3.2;A.val=I}}}
+  // dead-end hints
+  for(const c of S.comps){if(c.type==='rail'||!DEF[c.type].edges)continue;for(const e of DEF[c.type].edges(c)){if(!e[3]||e[3]==='main'||e[3]==='heater')continue;const a=c.id+'.'+e[0],b=c.id+'.'+e[1];if(wired(a)!==wired(b)&&N.srcOf(wired(a)?a:b)&&PH.includes(N.srcOf(wired(a)?a:b))&&e[2])F.push(['warn',`${c.label}: الطرف ${wired(a)?e[1]:e[0]} سايب (Floating) – التيار واصل لحد هنا ومش رايح لأي حتة.`])}}
+  // distances for flow direction
+  const adj={};const add=(a,b)=>{(adj[a]=adj[a]||[]).push(b);(adj[b]=adj[b]||[]).push(a)};
+  for(const w of S.wires)add(w.a,w.b);for(const e of allEdges())if(e.closed)add(e.a,e.b);
+  const dist={};const q=[];for(const id in S.TP)if(S.TP[id].src&&powerOn()){dist[id]=0;q.push(id)}
+  while(q.length){const x=q.shift();for(const y of adj[x]||[])if(dist[y]===undefined){dist[y]=dist[x]+1;q.push(y)}}
+  S.dist=dist;
+  // neutral nets carrying current
+  const nact=new Set();for(const c of S.comps){const d=DEF[c.type];if(!d.loads)continue;for(const l of d.loads(c))if(c.st.on||(c.type==='volt'&&c.val))[l[0],l[1]].forEach(t=>{if(N.srcOf(c.id+'.'+t)==='N')nact.add(N.root(c.id+'.'+t))})}
+  if(m.run)['U2','V2','W2'].forEach(t=>{});
+  S.nact=nact;S.faults=F;
+}
+function tick(){S.now+=100;const before=sig();solve();if(sig()!==before||S.comps.some(c=>c.type==='timer'&&c.st.on)||(S.board===3&&Object.values(S.plc.T).some(t=>t.en)))render()}
+function sig(){return S.comps.map(c=>JSON.stringify(c.st)+(c.demo||'')+(c.mode||'')).join('|')+powerOn()+(S.trip?1:0)+(S.board===3?JSON.stringify([S.plc.Q,S.plc.M,S.plc.I,S.plc.run,S.plc.T,S.plc.F]):'')}
+
+/* ================= trace ================= */
+function trace(cid){
+  const c=S.cmap[cid];if(!c)return null;const d=DEF[c.type];const l=d.loads(c)[0];
+  const A=c.id+'.'+l[0],B=c.id+'.'+l[1];
+  const adj={};const add=(a,b,e)=>{(adj[a]=adj[a]||[]).push([b,e]);(adj[b]=adj[b]||[]).push([a,e])};
+  for(const w of S.wires)add(w.a,w.b,{wire:1});for(const e of allEdges())add(e.a,e.b,e);
+  function bfs(srcPred,target){const cost={},prev={};const dq=[];for(const id in S.TP)if(srcPred(S.TP[id].src)){cost[id]=0;dq.push(id)}
+    while(dq.length){dq.sort((x,y)=>cost[x]-cost[y]);const x=dq.shift();for(const [y,e] of adj[x]||[]){const w=(e.wire||e.closed)?0:1;const nc=cost[x]+w+0.001;if(cost[y]===undefined||nc<cost[y]){cost[y]=nc;prev[y]=[x,e];dq.push(y)}}}
+    if(cost[target]===undefined)return null;const path=[];let t=target;while(prev[t]){path.unshift({from:prev[t][0],to:t,e:prev[t][1]});t=prev[t][0]}return {start:t,path,cost:cost[target]}}
+  const ph=s=>PH.includes(s),nn=s=>s==='N'||s==='PE';
+  let r1=bfs(ph,A),r2=bfs(nn,B),rev=false;
+  const r1b=bfs(ph,B),r2b=bfs(nn,A);
+  const sc=(x,y)=>(x?x.cost:99)+(y?y.cost:99);
+  if(sc(r1b,r2b)<sc(r1,r2)){r1=r1b;r2=r2b;rev=true}
+  const steps=[];let stopped=false;const hl=new Set();
+  const nm=t=>{const p=S.TP[t];return p.c.type==='rail'?p.c.src:p.c.label+' '+p.n};
+  if(!r1){steps.push({cls:'stop',t:`الطرف ${rev?l[1]:l[0]} بتاع ${c.label} مش واصل بأي فاز (L1/L2/L3) خالص ✖`});stopped=true}
+  else{steps.push({cls:'src',t:`${S.TP[r1.start].src}`+(powerOn()?' (فيه كهربا)':' (الكهربا مفصولة ✖)')});if(!powerOn())stopped=true;
+    for(const p of r1.path){const e=p.e;if(e.wire||!e.name||e.name==='heater')continue;
+      const lab=`${e.c.label} ${e.ta}-${e.tb} [${e.name}]`;
+      if(e.closed)steps.push({cls:'ok',t:`${lab} (مقفول ✔)`});
+      else if(!stopped){steps.push({cls:'stop',t:`${lab} (مفتوح ✖ التيار واقف هنا)`});stopped=true;hl.add(e.c.id+'|'+e.ta+'|'+e.tb);hl.add('T|'+e.a);hl.add('T|'+e.b)}
+      else steps.push({cls:'',t:`${lab} (مفتوح)`});}
+    steps.push({cls:stopped?'':'ok',t:`${c.label} ${rev?l[1]:l[0]} ${stopped?'':'✔ وصل'}`});}
+  if(!r2){steps.push({cls:stopped?'':'stop',t:`الطرف ${rev?l[0]:l[1]} مش راجع على N ✖ (مفيش نيوترال)`});if(!stopped){hl.add('T|'+(rev?A:B))}stopped=true}
+  else{steps.push({cls:'',t:`${c.label} ${rev?l[0]:l[1]}`});let s2=false;
+    for(const p of r2.path.slice().reverse()){const e=p.e;if(e.wire||!e.name)continue;const lab=`${e.c.label} ${e.ta}-${e.tb} [${e.name}]`;
+      if(e.closed)steps.push({cls:'ok',t:`${lab} (مقفول ✔)`});else{steps.push({cls:stopped||s2?'':'stop',t:`${lab} (مفتوح ✖)`});if(!stopped&&!s2){hl.add(e.c.id+'|'+e.ta+'|'+e.tb)}s2=true}}
+    steps.push({cls:'ok',t:'N (نيوترال)'});if(s2)stopped=true}
+  return {steps,stopped,on:!!c.st.on,hl,qs:r1?r1.path.filter(p=>p.e.c&&p.e.c.type==='plcu').map(p=>p.e.name):[]};
+}
+
+/* ================= rendering ================= */
+let VB=[0,0,100,100];
+function live(c,t){const N=S.net;if(!N)return false;return PH.includes(N.srcOf(c.id+'.'+t))}
+function hlE(c,a,b){return S.hl.has(c.id+'|'+a+'|'+b)||S.hl.has(c.id+'|'+b+'|'+a)}
+function compSVG(c,interactive){
+  const d=DEF[c.type];let s=`<g transform="translate(${c.x},${c.y})">`;
+  if(c.type!=='rail'){s+=`<rect x="0" y="0" width="${c.w}" height="${c.h}" rx="8" fill="${c.fill||'#fbfaf6'}" stroke="#263238" stroke-width="2"/>`;
+    const t=c.title||d.title||'';s+=`<rect x="0" y="0" width="${c.w}" height="24" rx="8" fill="#e3e7ee"/>`+txt(c.w/2,17,c.ft?c.ft:t+(c.type!=='lamp'&&!['master','cb','plamp','olind','mainEs','plc'].includes(c.type)&&c.label&&!/^(STOP|START|SELECTOR) /.test(c.label)?' '+(c.label.match(/\d+$/)||[''])[0].replace(/^/,c.type==='contactor'||c.type==='ol'||c.type==='timer'||c.type==='relay'?'':' #'):''),12,'#0d2b5e','800');
+    if(['contactor','ol','timer','relay'].includes(c.type))s+=txt(c.w-8,17,c.label,12,'#b71c1c','800','end');}
+  s+=d.draw(c);
+  for(const t of d.terms(c)){const id=c.id+'.'+t[0];const P=S.TP[id];if(c.type!=='rail'&&!d.nolab)s+=txt(t[1],t[2]+(t[2]>c.h/2||c.type==='plc'?27:-16),t[0],11,'#111','700');
+    s+=jack(id,t[1],t[2],t[3],interactive&&S.net&&PH.includes(S.net.srcOf(id)),S.sel===id||S.hl.has('T|'+id))}
+  return s+'</g>';
+}
+function defs(){return `<defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter><filter id="wg" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter><filter id="sh"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity=".5"/></filter></defs>`}
+function wirePath(a,b){const A=S.TP[a],B=S.TP[b];const dx=B.x-A.x,dy=B.y-A.y,len=Math.hypot(dx,dy);const sag=30+len*.22;
+  return `M${A.x} ${A.y} C${A.x+dx*.15} ${A.y+sag+dy*.1} ${B.x-dx*.15} ${B.y+sag-dy*.1} ${B.x} ${B.y}`}
+function wiresSVG(){
+  let s='';const N=S.net;
+  S.wires.forEach((w,i)=>{if(!S.TP[w.a]||!S.TP[w.b])return;const src=N?N.srcOf(w.a):null;const isL=PH.includes(src),isN=src==='N'&&S.nact&&S.nact.has(N.root(w.a)),isD=src==='P24';
+    let a=w.a,b=w.b;const da=S.dist[a],db=S.dist[b];if(isL&&da!==undefined&&db!==undefined&&db<da){a=w.b;b=w.a}if(isN&&da!==undefined&&db!==undefined&&da<db){a=w.b;b=w.a}
+    const d=wirePath(a,b);
+    s+=`<g data-wire="${i}" style="cursor:pointer"><path d="${d}" stroke="transparent" stroke-width="12" fill="none"/>`;
+    if(isL)s+=`<path d="${d}" stroke="#ff3d00" stroke-width="12" fill="none" opacity=".45" filter="url(#wg)"/>`;
+    s+=`<path d="${d}" stroke="#000" stroke-width="7" fill="none" opacity="${isL||isN?.6:.3}"/><path d="${d}" stroke="${w.c}" stroke-width="5" fill="none" opacity="${isL||isN||!powerOn()?1:.55}"/>`;
+    s+=`<path d="${d}" stroke="#fff" stroke-width="1.2" fill="none" opacity=".35" stroke-dasharray="2 5"/>`;
+    if(isL)s+=`<path class="flow" d="${d}" stroke="#ffeb3b" stroke-width="3" fill="none"/>`;
+    if(isN)s+=`<path class="flow" d="${d}" stroke="#80d8ff" stroke-width="3" fill="none"/>`;
+    if(isD)s+=`<path class="flow" d="${d}" stroke="#76ff03" stroke-width="2.5" fill="none"/>`;
+    s+='</g>'});
+  return s;
+}
+function render(){
+  if(S.quiet||!S.board)return;
+  const svg=$('svg');
+  svg.innerHTML=defs()+`<g id="bgL">${S.B.bg()}</g><g>${S.comps.map(c=>compSVG(c,true)).join('')}</g><g>${wiresSVG()}</g><path id="ghost" d="" stroke="${S.color}" stroke-width="4" fill="none" stroke-dasharray="6 4" pointer-events="none"/>`;
+  $('pwr').classList.toggle('on',powerOn());$('pwr').textContent=powerOn()?'⏻ الكهربا شغالة':'⏻ تشغيل الكهربا';
+  const bn=$('banner');if(S.trip){bn.style.display='block';bn.textContent='⚡ Trip! '+S.trip.msg}else bn.style.display='none';
+  renderSide();
+  if(S.board===3)renderLadder();
+}
+function setVB(){$('svg').setAttribute('viewBox',VB.join(' '))}
+function fitView(){const v=S.B.vb,st=$('stage').getBoundingClientRect();const ar=st.width/Math.max(1,st.height),va=v[2]/v[3];
+  if(ar>va){const w=v[3]*ar;VB=[v[0]-(w-v[2])/2,v[1],w,v[3]]}else{const h=v[2]/ar;VB=[v[0],v[1]-(h-v[3])/2,v[2],h]}setVB()}
+function zoomBy(k,cx,cy){if(cx===undefined){cx=VB[0]+VB[2]/2;cy=VB[1]+VB[3]/2}const w=VB[2]*k;if(w<200||w>6000)return;VB=[cx-(cx-VB[0])*k,cy-(cy-VB[1])*k,w,VB[3]*k];setVB()}
+
+/* ---------- side panel ---------- */
+let TAB=1,EX=null;
+function tab(n){TAB=n;$('tb1').classList.toggle('on',n===1);$('tb2').classList.toggle('on',n===2);$('pane1').style.display=n===1?'':'none';$('pane2').style.display=n===2?'':'none';renderSide()}
+function loadsList(){return S.comps.filter(c=>DEF[c.type].loads&&c.type!=='volt')}
+function renderSide(){
+  if(TAB===1){
+    const L=loadsList();const wired=c=>Object.keys(S.TP).some(id=>S.TP[id].c===c&&S.wires.some(w=>w.a===id||w.b===id));
+    if(!S.traceLoad||!S.cmap[S.traceLoad]){const f=L.find(wired);S.traceLoad=f?f.id:''}
+    let h=(S.board===3?plcChainHTML():'')+`<h3>🔎 تتبع التيار</h3><div class="sec">اختار الحمل: <select id="tsel" onchange="S.traceLoad=this.value;render()" style="font-size:14px;max-width:200px">`+L.map(c=>`<option value="${c.id}" ${c.id===S.traceLoad?'selected':''}>${c.label}${wired(c)?' •':''}${c.st.on?' ✔ON':''}</option>`).join('')+`</select>`;
+    S.hl=new Set();
+    if(S.traceLoad){const t=trace(S.traceLoad);S.hl=t.hl;
+      h+=`<div style="margin-top:6px;font-weight:700;color:${t.on?'#2e7d32':'#c62828'}">${t.on?'✔ الحمل شغال – التيار عامل دايرة كاملة':'✖ الحمل مش شغال'}</div>`+t.steps.map((s,i)=>`<div class="step ${s.cls}">${i?'← ':''}${esc(s.t)}</div>`).join('');}
+    h+=`</div><div class="sec"><b>الحالة والأعطال:</b>`+(S.faults.length?S.faults.map(f=>`<div class="${f[0]}">${esc(f[1])}</div>`).join(''):'<div class="good">مفيش أعطال ✔</div>')+`</div>`;
+    const on=S.comps.filter(c=>c.st.on&&!['master','cb'].includes(c.type));
+    h+=`<div class="sec"><b>شغال دلوقتي:</b> ${on.length?on.map(c=>c.label).join('، '):'—'}${S.motor.run?`<br>🌀 الموتور شغال ${S.motor.dir} – ${S.motor.mode}`:''}</div>`;
+    h+=`<div class="sec" style="font-size:12px;color:#555">الكويلات واللمبات 220V بين L و N. الأحمر المتحرك = تيار ماشي، الأزرق = راجع على N، البرتقالي = مكان وقوف التيار.</div>`;
+    $('pane1').innerHTML=h;
+    // re-apply highlights to svg (render called before) -> redraw comps quickly
+    if(S.hl.size&&!S._hlpass){S._hlpass=1;render();S._hlpass=0}
+  }else renderEx();
+}
+
+/* ================= wiring interactions ================= */
+function snapshot(){S.hist.push(JSON.stringify(S.wires));if(S.hist.length>200)S.hist.shift()}
+function addWire(a,b,col){if(a===b||!S.TP[a]||!S.TP[b])return false;if(S.wires.some(w=>(w.a===a&&w.b===b)||(w.a===b&&w.b===a)))return false;snapshot();S.wires.push({a,b,c:col||S.color});solve();render();return true}
+function delWire(i){snapshot();S.wires.splice(i,1);solve();render()}
+function undo(){if(!S.hist.length)return;S.wires=JSON.parse(S.hist.pop());solve();render()}
+function clearAll(){if(S.wires.length&&!S.quiet&&!confirm('تمسح كل السلوك؟'))return;snapshot();S.wires=[];solve();render()}
+function saveLS(){localStorage.setItem('ctrlsim_b'+S.board,JSON.stringify(S.board===3?{wires:S.wires,lad:S.lad,motor:S.cmap.M.mode}:S.wires));toast('اتحفظ التوصيل ✔')}
+function loadLS(){const s=localStorage.getItem('ctrlsim_b'+S.board);if(!s)return toast('مفيش توصيل محفوظ للوحة دي');snapshot();const o=JSON.parse(s);if(Array.isArray(o))S.wires=o;else{S.wires=o.wires||[];if(o.lad)S.lad=o.lad;if(o.motor)S.cmap.M.mode=o.motor}LKEY='';solve();render();toast('اترجع التوصيل'+(S.board===3?' والبرنامج':'')+' ✔')}
+function exportJSON(){const blob=new Blob([JSON.stringify({board:S.board,wires:S.wires,timers:S.comps.filter(c=>c.type==='timer').map(c=>[c.id,c.d]),motor:S.cmap.M.mode,lad:S.board===3?S.lad:undefined},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='wiring_board'+S.board+'.json';a.click()}
+function importJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(o.board&&o.board!==S.board)selectBoard(o.board);snapshot();S.wires=o.wires||[];(o.timers||[]).forEach(t=>{if(S.cmap[t[0]])S.cmap[t[0]].d=t[1]});if(o.motor)S.cmap.M.mode=o.motor;if(o.lad)S.lad=o.lad;LKEY='';solve();render();toast('اتحمل الملف ✔')}catch(e){alert('ملف غير صالح')}};r.readAsText(f);inp.value=''}
+function toast(m){const b=$('banner');b.style.display='block';b.style.background='#2e7d32';b.textContent=m;setTimeout(()=>{b.style.background='#c62828';render()},1400)}
+function flash(){const f=$('flash');f.style.transition='none';f.style.opacity=.55;setTimeout(()=>{f.style.transition='opacity .7s';f.style.opacity=0},80)}
+function togglePower(){setPower(!powerOn());solve();render()}
+
+function btnAction(data,down){
+  const [cid,b]=data.split(':');const c=S.cmap[cid];if(!c)return;
+  if(down){
+    if(c.type==='stop'||c.type==='start'||c.type==='dpb'){c.st[b]=true;PRESSED.add(data)}
+    else if(c.type==='sel')c.st.p=!c.st.p;
+    else if(c.type==='es'||c.type==='mainEs')c.st.lat=!c.st.lat;
+    else if(c.type==='ol')c.st.t=!c.st.t;
+    else if(c.type==='timer'){c.d=Math.max(1,Math.min(60,c.d+(b==='plus'?1:-1)))}
+    else if(c.type==='motor'){if(b==='demo')c.demo={undefined:'CW',CW:'CCW',CCW:undefined}[c.demo];else c.mode={delta:'star',star:'ext',ext:'delta'}[c.mode]}
+    else if(c.type==='plcu'){if(/^pb/.test(b)){c.st[b]=true;PRESSED.add(data)}else c.st[b]=!c.st[b]}
+    else if(c.type==='pwu'){setPower(!powerOn())}
+    else if(c.type==='master'||c.type==='cb'){setPower(!powerOn())}
+  }else{c.st[b]=false}
+  solve();render();
+}
+const PRESSED=new Set();
+function releaseAll(){if(!PRESSED.size)return;for(const d of PRESSED){const [cid,b]=d.split(':');S.cmap[cid].st[b]=false}PRESSED.clear();solve();render()}
+function svgPt(e){const r=$('svg').getBoundingClientRect();return [VB[0]+(e.clientX-r.left)/r.width*VB[2],VB[1]+(e.clientY-r.top)/r.height*VB[3]]}
+function pick(x,y){const r={};for(const el of document.elementsFromPoint(x,y)){if(!el.closest)continue;const b=el.closest('#svg [data-btn]');if(b&&!r.btn&&!r.term){r.btn=b;break}const t=el.closest('#svg [data-term]');if(t&&!r.btn){r.term=t;break}}return r}
+let ptrs=new Map(),pan=null,pinch=null,downInfo=null;
+function setupEvents(){
+  const svg=$('svg');
+  svg.addEventListener('pointerdown',e=>{
+    ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+    if(ptrs.size===2){const p=[...ptrs.values()];pinch={d:Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1])};pan=null;return}
+    const hit=pick(e.clientX,e.clientY);const bt=hit.btn;if(bt){e.preventDefault();btnAction(bt.dataset.btn,true);return}
+    const tm=hit.term;if(tm){downInfo={term:tm.dataset.term};return}
+    const wr=e.target.closest('[data-wire]');if(wr){downInfo={wire:+wr.dataset.wire,x:e.clientX,y:e.clientY};return}
+    pan={x:e.clientX,y:e.clientY,vb:VB.slice(),moved:false};
+  });
+  window.addEventListener('pointermove',e=>{
+    if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+    if(pinch&&ptrs.size===2){const p=[...ptrs.values()];const d=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]);const r=$('svg').getBoundingClientRect();const c=svgPt({clientX:(p[0][0]+p[1][0])/2,clientY:(p[0][1]+p[1][1])/2});zoomBy(pinch.d/d,c[0],c[1]);pinch.d=d;return}
+    if(pan){const r=$('svg').getBoundingClientRect();const dx=(e.clientX-pan.x)/r.width*VB[2],dy=(e.clientY-pan.y)/r.height*VB[3];if(Math.abs(e.clientX-pan.x)+Math.abs(e.clientY-pan.y)>4)pan.moved=true;VB=[pan.vb[0]-dx,pan.vb[1]-dy,VB[2],VB[3]];setVB()}
+    if(S.sel&&$('ghost')){const A=S.TP[S.sel],p=svgPt(e);$('ghost').setAttribute('d',`M${A.x} ${A.y} L${p[0]} ${p[1]}`)}
+    const tm=e.target.closest&&e.target.closest('[data-term]');const tip=$('tip');
+    if(tm){const P=S.TP[tm.dataset.term];const tn=P.c.type==='rail'?`${P.c.src} bus`:({plcu:'PLC UNIT',pwu:'POWER UNIT',contactor:'Contactor',ol:'Over Load',timer:'Timer',relay:'Relay',lamp:'Lamp',motor:'Motor'}[P.c.type]||'')+' '+P.c.label+' – '+P.n;
+      const ss=S.net&&S.net.srcOf(P.id);tip.textContent=tn.trim()+(ss?`  [${ss}]`:'');tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px'}else tip.style.display='none';
+  });
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;
+    releaseAll();
+    if(downInfo&&downInfo.term){const t2=pick(e.clientX,e.clientY).term;const id=t2?t2.dataset.term:downInfo.term;
+      if(!S.sel){if(id!==downInfo.term)addWire(downInfo.term,id);else{S.sel=id;render()}}
+      else{const a=S.sel;S.sel=null;if(a!==id)addWire(a,id);else render()}}
+    else if(downInfo&&downInfo.wire!==undefined){if(Math.abs(e.clientX-downInfo.x)+Math.abs(e.clientY-downInfo.y)<8)delWire(downInfo.wire)}
+    else if(pan&&!pan.moved&&S.sel){S.sel=null;render()}
+    downInfo=null;pan=null;};
+  window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+  svg.addEventListener('wheel',e=>{e.preventDefault();const p=svgPt(e);zoomBy(e.deltaY>0?1.12:0.89,p[0],p[1])},{passive:false});
+  window.addEventListener('resize',()=>S.board&&fitView());
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'){S.sel=null;render()}if((e.ctrlKey||e.metaKey)&&e.key==='z')undo()});
+}
+
+/* ================= exercises ================= */
+const EXS=[
+ {id:'dol',t:'(أ) تشغيل وإيقاف موتور بتثبيت ذاتي DOL',d:'وصّل دايرة القوى: L1 L2 L3 ← الكونتاكتور 1-3-5 ← 2-4-6 ← الأوفرلود 1-3-5 ← 2-4-6 ← الموتور U1 V1 W1. ودايرة التحكم: L1 ← OL 95-96 ← STOP (NC) ← START (NO) ويوازيه 13-14 من الكونتاكتور ← A1 … A2 ← N. لما تدوس START يشتغل ويفضل شغال لما تسيب، STOP يفصله، والأوفرلود يفصله.',
+  lad:[[['nc','OL 95-96'],['nc','STOP'],{par:[[['no','START']],[['no','K1 13-14']]]},['coil','K1']]]},
+ {id:'multi',t:'(ب) تشغيل من أكتر من مكان',d:'الموتور يشتغل من START 1 أو START 2 (توازي) ويقف من STOP 1 أو STOP 2 (توالي)، مع تثبيت ذاتي.',
+  lad:[[['nc','OL'],['nc','STOP1'],['nc','STOP2'],{par:[[['no','START1']],[['no','START2']],[['no','K1']]]},['coil','K1']]]},
+ {id:'fr',t:'(ج) عكس حركة Forward/Reverse مع Interlock',d:'كونتاكتور K1 للأمام (L1 L2 L3 على U V W) وK2 للخلف (بدّل فازتين). كل واحد بتثبيت ذاتي، وNC 21-22 من كل كونتاكتور في دايرة كويل التاني (Interlock) عشان ميشتغلوش مع بعض أبدًا.',
+  lad:[[['nc','OL'],['nc','STOP'],{par:[[['no','FWD']],[['no','K1']]]},['nc','K2 21-22'],['coil','K1']],[['nc','OL'],['nc','STOP'],{par:[[['no','REV']],[['no','K2']]]},['nc','K1 21-22'],['coil','K2']]]},
+ {id:'sd',t:'(د) ستار/دلتا بالتايمر',d:'حوّل الموتور لـ «أطراف خارجية». KM (الرئيسي) يغذي U1 V1 W1، KS (ستار) يقصّر W2 U2 V2 مع بعض، KD (دلتا) يوصّل U1-W2 و V1-U2 و W1-V2. عند START: KM + KS (ستار)، وبعد زمن التايمر يفصل KS ويشتغل KD (دلتا). Interlock بين KS و KD.',
+  lad:[[['nc','OL'],['nc','STOP'],{par:[[['no','START']],[['no','KM']]]},['coil','KM']],[['no','KM'],['coil','T']],[['no','KM'],['tnc','T 55-56'],['nc','KD'],['coil','KS']],[['no','KM'],['tno','T 67-68'],['nc','KS'],['coil','KD']]]},
+ {id:'seq',t:'(هـ) تشغيل لمبات بالتتابع بالتايمر',d:'لما تدوس START تنور لمبة أولى فورًا (مع تثبيت ذاتي بريلاي/كونتاكتور)، وبعد زمن التايمر تنور اللمبة التانية (وممكن تالتة بتايمر تاني). STOP يطفي الكل.',
+  lad:[[['nc','STOP'],{par:[[['no','START']],[['no','R1']]]},['coil','R1']],[['no','R1'],['lamp','RED']],[['no','R1'],['coil','T1']],[['tno','T1 67-68'],['lamp','YELLOW']]]},
+ {id:'ind',t:'(و) دايرة بلمبات بيان (تشغيل/فصل/Trip)',d:'دايرة DOL عادية + لمبة بتنور وهو شغال (من 13-14 للكونتاكتور)، لمبة بتنور وهو واقف (من 21-22)، ولمبة Trip بتنور لما الأوفرلود يفصل (من 97-98).',
+  lad:[[['nc','OL 95-96'],['nc','STOP'],{par:[[['no','START']],[['no','K1']]]},['coil','K1']],[['no','K1 13-14'],['lamp','RUN']],[['nc','K1 21-22'],['lamp','STOP']],[['no','OL 97-98'],['lamp','TRIP']]]}
+];
+function ladSVG(rungs){
+  const U=64;function meas(it){if(it.par){const ws=it.par.map(br=>br.reduce((a,x)=>a+meas(x).w,0));return {w:Math.max(...ws)+20,h:it.par.length*46}}return {w:U,h:46}}
+  function draw(it,x,y){if(it.par){const m=meas(it);let s='';it.par.forEach((br,i)=>{let cx=x+10;const yy=y+i*46;br.forEach(e=>{s+=draw(e,cx,yy);cx+=meas(e).w});s+=`<line x1="${cx}" y1="${yy}" x2="${x+m.w-10}" y2="${yy}" stroke="#000"/>`;if(i)s+=`<line x1="${x+10}" y1="${y}" x2="${x+10}" y2="${yy}" stroke="#000"/><line x1="${x+m.w-10}" y1="${y}" x2="${x+m.w-10}" y2="${yy}" stroke="#000"/>`});return `<line x1="${x}" y1="${y}" x2="${x+10}" y2="${y}" stroke="#000"/><line x1="${x+m.w-10}" y1="${y}" x2="${x+m.w}" y2="${y}" stroke="#000"/>`+s}
+    const [k,l]=it;const m=x+U/2;let s=`<line x1="${x}" y1="${y}" x2="${m-8}" y2="${y}" stroke="#000"/><line x1="${m+8}" y1="${y}" x2="${x+U}" y2="${y}" stroke="#000"/>`;
+    if(k==='coil'||k==='lamp')s+=`<circle cx="${m}" cy="${y}" r="9" fill="#fff" stroke="#000" stroke-width="1.5"/>`+(k==='lamp'?`<path d="M${m-6} ${y-6}L${m+6} ${y+6}M${m+6} ${y-6}L${m-6} ${y+6}" stroke="#000"/>`:'');
+    else{s+=`<line x1="${m-8}" y1="${y-9}" x2="${m-8}" y2="${y+9}" stroke="#000" stroke-width="1.5"/><line x1="${m+8}" y1="${y-9}" x2="${m+8}" y2="${y+9}" stroke="#000" stroke-width="1.5"/>`;if(k==='nc'||k==='tnc')s+=`<line x1="${m-11}" y1="${y+9}" x2="${m+11}" y2="${y-9}" stroke="#000" stroke-width="1.5"/>`;if(k[0]==='t')s+=`<path d="M${m-6} ${y-14} q6 -6 12 0" fill="none" stroke="#000"/>`}
+    return s+txt(m,y-15,l,9,'#0d47a1','700')}
+  let y=30,body='',W=0;const rs=rungs.map(r=>{const w=r.reduce((a,x)=>a+meas(x).w,0),h=Math.max(...r.map(x=>meas(x).h));W=Math.max(W,w);return {r,w,h}});
+  for(const R of rs){let x=20;let s='';R.r.forEach(e=>{s+=draw(e,x,y);x+=meas(e).w});s+=`<line x1="${x}" y1="${y}" x2="${W+20}" y2="${y}" stroke="#000"/>`;body+=s;y+=R.h+8}
+  return `<svg class="lad" viewBox="0 0 ${W+40} ${y}"><line x1="20" y1="8" x2="20" y2="${y-8}" stroke="#c62828" stroke-width="3"/><line x1="${W+20}" y1="8" x2="${W+20}" y2="${y-8}" stroke="#1565c0" stroke-width="3"/>${txt(20,10,'L',10,'#c62828')}${txt(W+20,10,'N',10,'#1565c0')}${body}</svg>`;
+}
+let EXRES=null;
+function renderEx(){
+  const LIST=S.board===3?PEXS:EXS;
+  let h=`<h3>📝 تمارين ${S.board===3?'PLC – Zelio (Ladder)':''} بمصحح أوتوماتيك</h3><div class="sec">`+LIST.map(e=>`<div class="ex ${EX===e.id?'on':''}" onclick="EX='${e.id}';EXRES=null;SHOWREF=false;renderSide()">${e.t}</div>`).join('')+`</div>`;
+  const e=LIST.find(x=>x.id===EX);
+  if(e){h+=`<div class="sec"><b>${e.t}</b><p style="margin:4px 0;line-height:1.7">${e.d}</p>`+(S.board===3?`<button class="b" style="background:#ffb300;color:#000" onclick="SHOWREF=!SHOWREF;renderSide()">💡 ${SHOWREF?'اخفي':'اعرض'} الحل المرجعي (Zelio Ladder)</button>`+(SHOWREF?`<div style="overflow:auto;direction:ltr;margin:6px 0">${ladTableHTML(e.ref,null,true)}</div><div style="font-size:12px;background:#fffde7;padding:6px;border-radius:6px;margin:4px 0"><b>التوصيل:</b> ${esc(e.wire)}</div><button class="b" onclick="loadRef('${e.id}')">⬇ حمّل الحل في المحرر</button>`:'')+`<button class="big" onclick="EXRES=runCheck('${e.id}');renderSide()">✅ اتأكد من شغلي</button>`:`<b>الدايرة المرجعية (Ladder):</b>${ladSVG(e.lad)}<button class="big" onclick="EXRES=runCheck('${e.id}');renderSide()">✅ اتأكد من توصيلي</button>`);
+    if(EXRES)h+=`<div class="${EXRES.pass?'good':'fault'}" style="font-weight:700">${EXRES.pass?'🎉 برافو! الدايرة صح ونجحت في كل الاختبارات':'✖ الدايرة لسه فيها مشكلة'}</div>`+EXRES.tests.map(t=>`<div class="${t.ok?'good':'fault'}">${t.ok?'✔':'✖'} ${esc(t.m)}</div>`).join('');
+    h+='</div>';}
+  $('pane2').innerHTML=h;
+}
+/* ---- checker engine (behaviour based, runs on a sandbox copy) ---- */
+function runCheck(id){
+  const saved={st:S.comps.map(c=>[c.id,JSON.stringify(c.st)]),now:S.now,trip:S.trip,wires:JSON.stringify(S.wires),plc:JSON.stringify(S.plc)};
+  S.quiet=true;let res;
+  try{res=CHECKS[id]()}catch(err){res={tests:[{ok:false,m:'خطأ داخلي: '+err.message}]}}
+  finally{for(const [cid,st] of saved.st)S.cmap[cid].st=JSON.parse(st);S.now=saved.now;S.trip=saved.trip;S.wires=JSON.parse(saved.wires);S.plc=JSON.parse(saved.plc);S.quiet=false;solve();render()}
+  res.pass=res.tests.length>0&&res.tests.every(t=>t.ok);return res;
+}
+function R(){for(const c of S.comps)c.st=initState(c);if(S.board===3)plcReset(true);setPower(true);S.trip=null;solve();adv(200)}
+function adv(ms){for(let t=0;t<ms;t+=50){S.now+=50;solve()}}
+function btnList(role){const a=[];for(const c of S.comps){const d=DEF[c.type];if(!d.btns)continue;for(const b of d.btns(c))if(b[1]===role)a.push({c,b:b[0],latch:b[2]==='latch'})}return a}
+const press=x=>{x.c.st[x.b]=true;solve()},release=x=>{if(!x.latch)x.c.st[x.b]=false;solve()};
+const run=()=>!!S.motor.run, lampsOn=()=>S.comps.filter(c=>c.type==='lamp'&&c.st.on).map(c=>c.id);
+const maxDelay=()=>Math.max(1,...S.comps.filter(c=>c.type==='timer').map(c=>c.d));
+function latch(s,goal){R();press(s);adv(300);const a=goal(),tr1=S.trip;release(s);adv(300);return {a,b:goal(),trip:tr1||S.trip}}
+function lbl(x){if(x.c.type==='plcu')return PBN[x.b];return x.c.label+(x.c.type==='dpb'?(x.b==='on'?' (ON)':' (OFF)'):'')}
+function findStarts(goal){const ok=[],partial=[];let trip=null;for(const s of btnList('no')){const r=latch(s,goal);if(r.trip)trip=r.trip;if(r.a&&r.b)ok.push(s);else if(r.a)partial.push(s)}return {ok,partial,trip}}
+function stopsFor(s,goal){const out=[];for(const t of [...btnList('nc')]){R();press(s);adv(300);release(s);adv(300);if(!goal())continue;press(t);adv(300);const a=goal();release(t);if(t.latch)t.c.st[t.b]=false,solve();adv(300);if(!a&&!goal())out.push(t)}return out}
+function powerOnCheck(T){R();if(S.trip){T.push({ok:false,m:'أول ما الكهربا اشتغلت البريكر فصل: '+S.trip.msg});return false}T.push({ok:true,m:'تشغيل الكهربا من غير قصر'});return true}
+function startFail(T,f,what){
+  if(f.trip){T.push({ok:false,m:'حصل قصر وانت بتجرب الزراير: '+f.trip.msg});return}
+  if(f.partial.length){T.push({ok:false,m:`${what} بيشتغل وانت دايس على ${lbl(f.partial[0])} بس، وبيقف أول ما تسيب ← ناقص التثبيت الذاتي (Self-holding): وصّل 13-14 بتاعة الكونتاكتور بالتوازي مع START.`});return}
+  // diagnose: does any contactor energize?
+  for(const s of btnList('no')){R();press(s);adv(300);const k=S.comps.filter(c=>c.type==='contactor'&&c.st.on);if(k.length){T.push({ok:false,m:`لما بتدوس ${lbl(s)} الكونتاكتور ${k.map(c=>c.label).join(',')} بيشتغل لكن ${what} مش بيشتغل ← راجع دايرة القوى (الكونتاكتور 1-3-5/2-4-6 ← الأوفرلود ← U1 V1 W1).`+(S.faults.find(f=>/الموتور/.test(f[1]))?' (فيه نقص فاز)':'')});return}}
+  T.push({ok:false,m:`مفيش أي زرار START بيشغل ${what}. اتأكد إن كويل الكونتاكتور A1 جاي من الفاز عن طريق STOP و START، وA2 على N.`});
+}
+const CHECKS={
+ dol(){const T=[];if(!powerOnCheck(T))return {tests:T};
+  if(run()){T.push({ok:false,m:'الموتور بيشتغل لوحده من غير ما تدوس START!'});return {tests:T}}T.push({ok:true,m:'الموتور واقف في الأول'});
+  const f=findStarts(run);if(!f.ok.length){startFail(T,f,'الموتور');return {tests:T}}
+  const s=f.ok[0];T.push({ok:true,m:`${lbl(s)} بيشغل الموتور وبيفضل شغال بعد ما تسيب (تثبيت ذاتي ✔)`});
+  const st=stopsFor(s,run);T.push(st.length?{ok:true,m:`${lbl(st[0])} بيوقف الموتور`}:{ok:false,m:'مفيش زرار STOP بيوقف الموتور ← STOP (NC) لازم يكون في التوالي قبل START والتثبيت.'});
+  let olok=false;for(const o of S.comps.filter(c=>c.type==='ol')){R();press(s);adv(300);release(s);adv(300);o.st.t=true;solve();adv(300);if(!run()){olok=true;break}}
+  T.push(olok?{ok:true,m:'الأوفرلود (TRIP) بيفصل الموتور'}:{ok:false,m:'لما الأوفرلود عمل Trip الموتور فضل شغال ← وصّل 95-96 (NC) في دايرة التحكم بالتوالي.'});
+  return {tests:T,s,stop:st[0]}},
+ multi(){const T=[];if(!powerOnCheck(T))return {tests:T};
+  if(run()){T.push({ok:false,m:'الموتور بيشتغل لوحده!'});return {tests:T}}
+  const f=findStarts(run);if(!f.ok.length){startFail(T,f,'الموتور');return {tests:T}}
+  const d0=(()=>{R();press(f.ok[0]);adv(300);return S.motor.dir})();const same=f.ok.filter(x=>{R();press(x);adv(300);return S.motor.dir===d0});const u=new Set(same.map(x=>x.c.id));T.push(u.size>=2?{ok:true,m:`الموتور بيشتغل من ${u.size} أماكن: ${same.map(lbl).join('، ')}`}:{ok:false,m:`الموتور بيشتغل من مكان واحد بس (${lbl(f.ok[0])}) ← وصّل START تاني بالتوازي مع الأول.`});
+  const st=stopsFor(f.ok[0],run);const us=new Set(st.map(x=>x.c.id));T.push(us.size>=2?{ok:true,m:`الموتور بيقف من ${us.size} أماكن: ${st.map(lbl).join('، ')}`}:{ok:false,m:`الموتور بيقف من ${us.size} مكان بس ← وصّل STOP تاني بالتوالي مع الأول.`});
+  return {tests:T}},
+ fr(){const T=[];if(!powerOnCheck(T))return {tests:T};
+  if(run()){T.push({ok:false,m:'الموتور بيشتغل لوحده!'});return {tests:T}}
+  const cw=()=>run()&&S.motor.dir==='CW',ccw=()=>run()&&S.motor.dir==='CCW';
+  const f1=findStarts(cw),f2=findStarts(ccw);
+  if(!f1.ok.length){startFail(T,f1.ok.length||f1.partial.length?f1:findStarts(run),'الموتور في اتجاه CW (أمام)');return {tests:T}}
+  T.push({ok:true,m:`${lbl(f1.ok[0])} بيشغل الموتور أمام CW مع تثبيت`});
+  const r2=f2.ok.filter(x=>!(x.c===f1.ok[0].c&&x.b===f1.ok[0].b));
+  if(!r2.length){T.push({ok:false,m:f2.partial.length?'الموتور بيعكس وانت دايس بس ← ناقص تثبيت كونتاكتور العكس.':'مفيش زرار بيشغل الموتور عكس CCW ← كونتاكتور العكس لازم يبدّل فازتين (مثلاً L1↔L3) قبل الموتور.'});return {tests:T}}
+  T.push({ok:true,m:`${lbl(r2[0])} بيشغل الموتور عكس CCW مع تثبيت`});
+  const st=stopsFor(f1.ok[0],run),st2=stopsFor(r2[0],run);T.push(st.length&&st2.length?{ok:true,m:'STOP بيوقف الاتجاهين'}:{ok:false,m:'STOP مش بيوقف الموتور في الاتجاهين.'});
+  let il=true,msg='';for(const [a,b] of [[f1.ok[0],r2[0]],[r2[0],f1.ok[0]]]){R();press(a);adv(300);release(a);adv(300);press(b);adv(300);const t1=S.trip;release(b);adv(300);if(t1||S.trip){il=false;msg=(t1||S.trip).msg}}
+  T.push(il?{ok:true,m:'Interlock شغال: دوست العكس والموتور شغال ومحصلش قصر'}:{ok:false,m:'دوست زرار العكس والموتور شغال ← حصل قصر! ناقص Interlock: حط 21-22 (NC) من كل كونتاكتور في دايرة كويل التاني. ('+msg+')'});
+  return {tests:T}},
+ sd(){const T=[];const M=S.cmap.M;if(M.mode!=='ext'){T.push({ok:false,m:'الموتور لازم يكون على وضع «أطراف خارجية (6)» – دوس على زرار التوصيلة في بلوك الموتور.'});return {tests:T}}
+  if(!powerOnCheck(T))return {tests:T};if(run()){T.push({ok:false,m:'الموتور بيشتغل لوحده!'});return {tests:T}}
+  const star=()=>run()&&S.motor.mode==='star';let s=null;
+  for(const b of btnList('no')){R();press(b);adv(250);const a=star();release(b);adv(150);if(a&&star()){s=b;break}}
+  if(!s){let anyRun=null;for(const b of btnList('no')){R();press(b);adv(250);if(run()){anyRun=S.motor.mode;break}}
+    T.push({ok:false,m:anyRun==='delta'?'الموتور بيبدأ دلتا على طول ← لازم يبدأ ستار (KS يقصّر W2 U2 V2) الأول.':'مفيش زرار بيشغل الموتور ستار مع تثبيت ← KM يغذي U1 V1 W1 وKS يقفل W2-U2-V2 مع بعض.'});return {tests:T}}
+  T.push({ok:true,m:`${lbl(s)} بيبدأ الموتور ستار ⋆`});
+  let sawD=false,trip=null;for(let t=0;t<maxDelay()*1000+1500;t+=100){adv(100);if(S.trip){trip=S.trip;break}if(run()&&S.motor.mode==='delta')sawD=true}
+  if(trip){T.push({ok:false,m:'حصل قصر وقت التحويل: '+trip.msg+' ← لازم Interlock بين KS و KD.'});return {tests:T}}
+  T.push(sawD&&run()&&S.motor.mode==='delta'?{ok:true,m:'بعد زمن التايمر الموتور اتحول دلتا △ وفضل شغال'}:{ok:false,m:'الموتور مااتحولش دلتا بعد التايمر ← KS يفصل بـ 55-56 وKD يشتغل بـ 67-68 من التايمر، وKD يوصّل U1-W2، V1-U2، W1-V2.'});
+  let stopped=false;for(const t of btnList('nc')){press(t);adv(200);release(t);if(t.latch){t.c.st[t.b]=false;solve()}adv(200);if(!run()){stopped=true;break}}
+  T.push(stopped?{ok:true,m:'STOP بيوقف الموتور'}:{ok:false,m:'STOP مش بيوقف الموتور.'});return {tests:T}},
+ seq(){const T=[];if(!powerOnCheck(T))return {tests:T};
+  if(lampsOn().length){T.push({ok:false,m:'فيه لمبة منورة قبل ما تدوس START: '+lampsOn().join(',')});return {tests:T}}
+  let best=null;for(const s of btnList('no')){R();press(s);adv(300);release(s);adv(300);const L0=lampsOn();if(!L0.length)continue;
+    const seen=new Set(L0);let later=0;for(let t=0;t<maxDelay()*2000+2000;t+=200){adv(200);for(const l of lampsOn())if(!seen.has(l)){seen.add(l);later++}}
+    if(!best||later>best.later)best={s,L0,later};if(later)break}
+  if(!best){let p=null;for(const s of btnList('no')){R();press(s);adv(300);if(lampsOn().length){p=s;break}}T.push({ok:false,m:p?`اللمبة بتنور وانت دايس ${lbl(p)} بس ← ناقص تثبيت ذاتي بريلاي/كونتاكتور.`:'مفيش زرار بينور أول لمبة.'});return {tests:T}}
+  T.push({ok:true,m:`${lbl(best.s)} بينور أول لمبة فورًا ومع تثبيت`});
+  T.push(best.later?{ok:true,m:`بعد زمن التايمر نوّرت ${best.later} لمبة زيادة بالتتابع`}:{ok:false,m:'مفيش لمبة تانية نورت بعد التايمر ← كويل التايمر من التثبيت، واللمبة التانية من 67-68 (NO متأخر).'});
+  let off=false;for(const t of btnList('nc')){press(t);adv(200);release(t);if(t.latch){t.c.st[t.b]=false;solve()}adv(200);if(!lampsOn().length){off=true;break}}
+  T.push(off?{ok:true,m:'STOP بيطفي كل اللمبات'}:{ok:false,m:'STOP مش بيطفي كل اللمبات.'});return {tests:T}},
+ ind(){const r=CHECKS.dol();const T=r.tests;if(!r.s)return {tests:T};
+  R();const Loff=lampsOn();press(r.s);adv(300);release(r.s);adv(300);const Lrun=lampsOn();
+  const ol=S.comps.filter(c=>c.type==='ol');let Ltrip=[];for(const o of ol){R();press(r.s);adv(300);release(r.s);adv(300);o.st.t=true;solve();adv(300);if(!run()){Ltrip=lampsOn();break}}
+  const runL=Lrun.filter(x=>!Loff.includes(x)),offL=Loff.filter(x=>!Lrun.includes(x)),tripL=Ltrip.filter(x=>!Loff.includes(x)&&!Lrun.includes(x)||(!Loff.includes(x)&&Ltrip.length));
+  const nm=id=>S.cmap[id].label;
+  T.push(runL.length?{ok:true,m:'لمبة التشغيل: '+runL.map(nm).join(',')}:{ok:false,m:'مفيش لمبة بتنور وقت التشغيل بس ← لمبة من 13-14 بتاعة الكونتاكتور.'});
+  T.push(offL.length?{ok:true,m:'لمبة الفصل: '+offL.map(nm).join(',')}:{ok:false,m:'مفيش لمبة بتنور والموتور واقف وتطفى لما يشتغل ← لمبة من 21-22 (NC) بتاعة الكونتاكتور.'});
+  const tl=Ltrip.filter(x=>!Loff.includes(x));
+  T.push(tl.length?{ok:true,m:'لمبة الـ Trip: '+tl.map(nm).join(',')}:{ok:false,m:'مفيش لمبة Trip بتنور لما الأوفرلود يفصل ← لمبة من 97-98 (NO) بتاعة الأوفرلود.'});
+  return {tests:T}}
+};
+
+/* ================= PLC – Zelio (Ladder) ================= */
+const PBN={pb1:'PB1 (أخضر)',pb2:'PB2 (أحمر)',pb3:'PB3 (أصفر)',pb4:'PB4 (أحمر)'};
+function newLad(){return {rows:12,cells:{},V:{},com:{},pre:{1:3,2:3,3:3,4:3,5:3,6:3,7:3,8:3}}}
+S.lad=newLad();S.view='wire';
+S.plc={run:false,I:{},Q:{},M:{},T:{},F:{},ov:null,base:null,forceQ:{},vis:null,hw:{}};
+function plcOn(){return S.board===3&&!!(S.cmap.PLC&&S.cmap.PLC.st.pw)}
+function plcReset(run){const P=S.plc;P.Q={};P.M={};P.T={};P.F={};P.ov=null;P.base=null;P.forceQ={};P.vis=null;P.hw={};P.I={};if(run!==undefined)P.run=run}
+function cellPass(x){const P=S.plc,T=P.T[x.n];switch(x.t){case 'I':return !!P.I[x.n];case 'i':return !P.I[x.n];case 'Q':return !!P.Q[x.n];case 'q':return !P.Q[x.n];case 'M':return !!P.M[x.n];case 'm':return !P.M[x.n];case 'T':return !!(T&&T.done);case 't':return !(T&&T.done);case '-':return true}return false}
+function ladGroups(L){const g=[];let r=0;while(r<L.rows){const grp=[r];while(r<L.rows-1&&[0,1,2,3,4].some(c=>L.V[r+'_'+c])){r++;grp.push(r)}g.push(grp);r++}return g}
+function applyCoil(x,pw){const P=S.plc;
+  if(x.k==='TT'){const T=P.T[x.n]||(P.T[x.n]={en:false,t0:0,done:false});const pre=(S.lad.pre[x.n]||1)*1000;
+    if(pw){if(!T.en){T.en=true;T.t0=S.now}T.done=S.now-T.t0>=pre-1}else{T.en=false;T.done=false}return}
+  const tb=x.t==='M'?P.M:P.Q;if(x.k==='[')tb[x.n]=!!pw;else if(x.k==='S'){if(pw)tb[x.n]=true}else if(x.k==='R'){if(pw)tb[x.n]=false}}
+function ladScan(){const L=S.lad;const vis={nd:{},pass:{},coil:{}};
+  for(const g of ladGroups(L)){let nd={};for(const r of g){nd[r]=true;vis.nd[r+'_0']=true}
+    for(let c=0;c<5;c++){const out={};for(const r of g){const x=L.cells[r+'_'+c];const p=x?cellPass(x):false;vis.pass[r+'_'+c]=p;out[r]=nd[r]&&p}
+      let i=0;while(i<g.length){let j=i;while(j<g.length-1&&L.V[g[j]+'_'+c])j++;let v=false;for(let k=i;k<=j;k++)v=v||out[g[k]];for(let k=i;k<=j;k++)out[g[k]]=v;i=j+1}
+      nd=out;for(const r of g)vis.nd[r+'_'+(c+1)]=nd[r]}
+    for(const r of g){const x=L.cells[r+'_5'];vis.coil[r]=!!nd[r];if(x)applyCoil(x,nd[r])}}
+  S.plc.vis=vis}
+function plcStep(N){const P=S.plc,on=plcOn();const old=JSON.stringify([P.Q,P.I,P.M]);
+  for(let n=1;n<=8;n++){P.hw[n]=on&&N.srcOf('PLC.I'+n)==='P24';P.I[n]=P.ov?!!P.ov[n]:(P.hw[n]||!!P.F[n])}
+  if(on&&P.run)ladScan();else{P.Q={};P.M={};P.T={};P.vis=null}
+  if(on)for(const q in P.forceQ)if(P.forceQ[q])P.Q[q]=true;
+  return JSON.stringify([P.Q,P.I,P.M])!==old}
+function maxPre(){let m=1;for(const k in S.lad.cells){const x=S.lad.cells[k];if(x.k==='TT')m=Math.max(m,S.lad.pre[x.n]||1)}return m}
+
+/* ---------- hardware drawing ---------- */
+function lcdLine(x,y,lab,P,on){let s=txt(x,y,lab,16,'#1b2a10','800','start');for(let n=1;n<=8;n++){const xx=x+22+n*20;if(on&&P[n])s+=`<rect x="${xx-8}" y="${y-15}" width="16" height="19" fill="#1b2a10"/>`;s+=txt(xx,y,String(n),15,on&&P[n]?'#c5d9a3':'#1b2a10','800')}return s}
+function drawPLCU(c){const P=S.plc,on=plcOn();
+  let s=`<rect x="0" y="0" width="${c.w}" height="${c.h}" rx="18" fill="#efe5c8" stroke="#b8902f" stroke-width="9"/><rect x="12" y="12" width="${c.w-24}" height="${c.h-24}" rx="12" fill="none" stroke="#e2c070" stroke-width="2"/>`;
+  s+=txt(450,50,'Arabia',20,'#8d6e20','800')+txt(450,84,'PLC UNIT',28,'#3e2723','800');
+  // inputs
+  s+=`<rect x="30" y="104" width="250" height="580" rx="8" fill="#f8f1dc" stroke="#b8902f" stroke-width="2"/>`+txt(155,128,'Inputs  24V DC',14,'#5d4037');
+  for(let i=1;i<=8;i++){const y=150+i*62;s+=txt(70,y-17,'+24V',9,'#555','700')+txt(130,y-17,'I'+i,10,'#b71c1c','800')+txt(190,y+6,'I'+i,18,'#3e2723','800')+`<circle cx="245" cy="${y}" r="8" fill="${P.I[i]&&on?'#76ff03':'#5d6b4a'}" stroke="#222"/>`}
+  // pushbuttons
+  s+=`<rect x="30" y="700" width="250" height="520" rx="8" fill="#f8f1dc" stroke="#b8902f" stroke-width="2"/>`+txt(155,722,'Push Buttons / Switches',13,'#5d4037');
+  [['pb1',90,790,'#43a047'],['pb2',220,790,'#e53935'],['pb3',90,950,'#fdd835'],['pb4',220,950,'#e53935']].forEach(([b,x,y,col],i)=>{s+=txt(x,y-42,'PB'+(i+1),13,'#3e2723','800')+pbtn(x,y,24,col,c.st[b],c.id+':'+b,'')+txt(x,y+48,'NO',10,'#2e7d32')});
+  [['sw1',90,1110],['sw2',220,1110]].forEach(([b,x,y],i)=>{const v=c.st[b];s+=txt(x,y-40,'S'+(i+1),13,'#3e2723','800')+`<g data-btn="${c.id}:${b}" style="cursor:pointer"><rect x="${x-26}" y="${y-26}" width="52" height="52" rx="8" fill="#333"/><rect x="${x-6}" y="${y-24}" width="12" height="48" rx="5" fill="#ddd" transform="rotate(${v?40:-40} ${x} ${y})"/></g>`+txt(x-30,y-28,'0',10,'#555')+txt(x+30,y-28,'1',10,'#555')});
+  // zelio module
+  s+=`<rect x="320" y="110" width="320" height="460" rx="8" fill="#e9e9e4" stroke="#555" stroke-width="2"/><rect x="320" y="110" width="320" height="56" fill="#cfd2d4" stroke="#555"/>`;
+  for(let i=0;i<10;i++)s+=`<circle cx="${342+i*31}" cy="130" r="7" fill="#9e9e9e" stroke="#444"/>`+txt(342+i*31,157,i<2?['L','N'][i]:'I'+(i-1),9,'#333');
+  s+=txt(480,192,'Zelio Logic  SR2/SR3',13,'#37474f','800')+`<rect x="350" y="206" width="260" height="140" rx="4" fill="#9bb46c" stroke="#333" stroke-width="3"/><rect x="358" y="214" width="244" height="124" fill="#b8cf8a"/>`;
+  s+=txt(368,240,on?(P.run?'RUN':'STOP'):'',17,'#1b2a10','800','start')+txt(592,240,on?'LADDER':'',12,'#1b2a10','800','end');
+  if(on){s+=lcdLine(368,272,'I',P.I,true)+lcdLine(368,302,'Q',P.Q,true);
+    const te=Object.keys(P.T).filter(k=>P.T[k].en);s+=txt(368,330,te.length?te.map(k=>'T'+k+' '+(P.T[k].done?'OK':(Math.max(0,(S.lad.pre[k]||1)-(S.now-P.T[k].t0)/1000)).toFixed(1)+'s')).join(' '):'Zelio  '+(P.run?'▶':'■'),13,'#1b2a10','700','start')}
+  [['Del',380],['Ins',430],['Sh',480],['Menu/OK',540]].forEach(([k,x])=>s+=`<rect x="${x-22}" y="364" width="44" height="26" rx="5" fill="#607d8b"/>`+txt(x,382,k,10,'#fff'));
+  s+=`<rect x="456" y="398" width="48" height="48" rx="24" fill="#90a4ae"/>`+txt(480,428,'◂ ▸',12,'#fff');
+  s+=`<rect x="320" y="470" width="320" height="100" fill="#cfd2d4" stroke="#555"/>`;for(let i=0;i<8;i++)s+=`<circle cx="${350+i*37}" cy="${545}" r="7" fill="#9e9e9e" stroke="#444"/>`+txt(350+i*37,520,'Q'+(i+1),9,'#333');
+  s+=txt(480,500,'Relay outputs',10,'#333');
+  // power
+  s+=`<rect x="320" y="600" width="320" height="300" rx="8" fill="#f8f1dc" stroke="#b8902f" stroke-width="2"/>`+txt(480,628,'POWER',18,'#3e2723','800')+
+   `<g data-btn="${c.id}:pw" style="cursor:pointer"><rect x="400" y="650" width="90" height="150" rx="6" fill="#eceff1" stroke="#333" stroke-width="2"/><rect x="428" y="672" width="34" height="96" rx="4" fill="#cfd8dc" stroke="#555"/><rect x="431" y="${c.st.pw?675:725}" width="28" height="40" rx="3" fill="${c.st.pw?'#2e7d32':'#37474f'}"/>`+txt(445,790,c.st.pw?'ON I':'OFF O',12,c.st.pw?'#2e7d32':'#333')+`</g>`+txt(445,826,'MCB 2P 6A',10,'#555')+
+   lampG(565,700,18,'#ff1744',c.st.pw)+txt(565,744,'POWER',10)+txt(565,790,'220 VAC',11,'#3e2723')+`<circle cx="545" cy="830" r="10" fill="#d32f2f" stroke="#000"/><circle cx="585" cy="830" r="10" fill="#1a1a1a" stroke="#000"/>`+txt(545,860,'L',10)+txt(585,860,'N',10);
+  s+=`<foreignObject x="320" y="920" width="320" height="300"><div xmlns="http://www.w3.org/1999/xhtml" style="direction:rtl;font:13px Tahoma,Arial;color:#3e2723;line-height:1.7"><b>توصيل الدخول:</b> + (24V) ← طرف الزرار، الطرف التاني ← I.<br/><b>توصيل الخروج:</b> فاز L ← Q (أحمر)، Q (أسود) ← A1 الكونتاكتور، A2 ← N.<br/>البرنامج يتعمل من «🪜 Ladder».</div></foreignObject>`;
+  // outputs
+  s+=`<rect x="660" y="104" width="220" height="1116" rx="8" fill="#f8f1dc" stroke="#b8902f" stroke-width="2"/>`+txt(770,130,'Relay Outputs',16,'#3e2723','800');
+  for(let n=1;n<=8;n++){const y=200+(n-1)*130;s+=`<rect x="672" y="${y-50}" width="196" height="108" rx="6" fill="none" stroke="#d9c38a"/>`+lampG(700,y,13,'#ff1744',!!(on&&P.Q[n]))+txt(797,y-30,'Q'+n,17,'#3e2723','800')+txt(797,y+44,'220 VAC',11,'#5d4037')}
+  return s}
+function drawPWU(c){const p=powerOn();
+  let s=`<rect x="0" y="0" width="${c.w}" height="${c.h}" rx="16" fill="#a8d4ee" stroke="#3f7fa6" stroke-width="7"/><rect x="10" y="10" width="${c.w-20}" height="${c.h-20}" rx="10" fill="none" stroke="#d9b45a" stroke-width="2"/>`;
+  s+=txt(820,46,'PLC TRAINER (POWER UNIT)',26,'#0d2b5e','800')+txt(120,46,'Arabia',18,'#0d47a1','800');
+  s+=`<rect x="30" y="80" width="420" height="280" rx="8" fill="#c4e3f5" stroke="#3f7fa6" stroke-width="2"/>`+txt(240,106,'3-ph AC Power',16,'#0d2b5e','800');
+  ['L1','L2','L3','N'].forEach((l,i)=>s+=txt(80+i*85,150,l,18,'#0d2b5e','800'));s+=txt(400,220,'PE',16,'#1b5e20','800');
+  s+=`<rect x="470" y="80" width="230" height="280" rx="8" fill="#c4e3f5" stroke="#3f7fa6" stroke-width="2"/>`+txt(585,106,'FUSE',16,'#0d2b5e','800');
+  for(let i=0;i<3;i++){const x=515+i*70;s+=`<rect x="${x-20}" y="130" width="40" height="180" rx="6" fill="#263238"/><rect x="${x-14}" y="150" width="28" height="60" rx="4" fill="#cfd8dc"/><circle cx="${x}" cy="270" r="14" fill="#111" stroke="#555"/>`+txt(x,340,'L'+(i+1),12,'#0d2b5e')}
+  s+=`<g data-btn="${c.id}:mcb" style="cursor:pointer"><rect x="730" y="80" width="200" height="280" rx="8" fill="#eceff1" stroke="#333" stroke-width="2"/>`;
+  for(let i=0;i<3;i++)s+=`<rect x="${752+i*55}" y="140" width="46" height="140" rx="4" fill="#fafafa" stroke="#888"/>`;
+  s+=`<rect x="752" y="${p?160:220}" width="156" height="40" rx="6" fill="${p?'#c62828':'#37474f'}"/>`+txt(830,110,'MCB 3P',14,'#333','800')+txt(830,320,p?'ON  I':'OFF  O',16,p?'#c62828':'#333','800')+`</g>`;
+  [['#ffea00','L1',1000],['#00e676','L2',1090],['#ff1744','L3',1180]].forEach(([col,l,x])=>s+=lampG(x,200,24,col,p)+txt(x,262,l,14,'#0d2b5e','800'));
+  s+=txt(1090,120,'Pilot Lamps',14,'#0d2b5e','800');
+  s+=`<circle cx="1420" cy="210" r="95" fill="#c62828" stroke="#6d0000" stroke-width="5"/><circle cx="1420" cy="210" r="66" fill="#8e0000"/>`+[0,72,144,216,288].map(a=>`<circle cx="${1420+40*Math.cos(a*Math.PI/180-1.57)}" cy="${210+40*Math.sin(a*Math.PI/180-1.57)}" r="9" fill="#ffd54f" stroke="#333"/>`).join('')+txt(1420,334,'3-ph Socket 380V',14,'#0d2b5e','800');
+  return s}
+function arcArrow(cx,cy,r,a1,a2,cw,col,w){const P=a=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)];const [x1,y1]=P(a1),[x2,y2]=P(a2);
+  const t=a2*Math.PI/180,d=cw?1:-1,tx=-Math.sin(t)*d,ty=Math.cos(t)*d,nx=Math.cos(t),ny=Math.sin(t),L=w*2.8;
+  const tip=[x2+tx*L,y2+ty*L],b1=[x2+nx*L*.7,y2+ny*L*.7],b2=[x2-nx*L*.7,y2-ny*L*.7];
+  return `<path d="M${x1} ${y1} A${r} ${r} 0 0 ${cw?1:0} ${x2} ${y2}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/><path d="M${tip} L${b1} L${b2}Z" fill="${col}"/>`}
+function drawMotor(c){const m0=S.motor||{};const m=c.demo?{run:true,dir:c.demo,mode:'demo'}:m0;const run=!!m.run,dir=m.dir;
+  const big=!!c.big,cx=big?385:225,cy=big?215:110,R=big?118:56;let s='';
+  if(big){s+=`<rect x="20" y="40" width="230" height="260" rx="10" fill="#f9d71c" stroke="#8d6e00" stroke-width="3"/><rect x="34" y="78" width="202" height="208" rx="6" fill="#e3e3dc" stroke="#555"/>`+txt(135,66,'Terminal Box',13,'#3e2723','800');
+    if(c.mode==='delta')[70,135,200].forEach(x=>s+=`<rect x="${x-5}" y="130" width="10" height="90" fill="#c58b2a" stroke="#6d4c00"/>`);
+    if(c.mode==='star')s+=`<rect x="70" y="215" width="130" height="10" fill="#c58b2a" stroke="#6d4c00"/>`;}
+  else{s+=`<line x1="30" y1="62" x2="30" y2="128" stroke="${c.mode==='delta'?'#c58b2a':'#999'}" stroke-width="${c.mode==='delta'?4:1}"/><line x1="75" y1="62" x2="75" y2="128" stroke="${c.mode==='delta'?'#c58b2a':'#999'}" stroke-width="${c.mode==='delta'?4:1}"/><line x1="120" y1="62" x2="120" y2="128" stroke="${c.mode==='delta'?'#c58b2a':'#999'}" stroke-width="${c.mode==='delta'?4:1}"/>`+(c.mode==='star'?`<line x1="30" y1="140" x2="120" y2="140" stroke="#c58b2a" stroke-width="4"/>`:'')}
+  // housing
+  s+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#fbc02d" stroke="#6d5200" stroke-width="${big?5:3}"/>`;
+  for(let a=0;a<360;a+=15)s+=`<rect x="${cx-2}" y="${cy-R}" width="4" height="${R*.14}" fill="#c99700" transform="rotate(${a} ${cx} ${cy})"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${R*.8}" fill="#2f2f2f" stroke="#111" stroke-width="2"/>`;
+  const st=run?`style="transform-origin:${cx}px ${cy}px;animation:${dir==='CW'?'spin':'spinr'} ${m.mode==='star'?1.4:.6}s linear infinite"`:'';
+  s+=`<g ${st}>`+[0,72,144,216,288].map(a=>`<path d="M${cx} ${cy} C${cx+R*.15} ${cy-R*.3} ${cx+R*.35} ${cy-R*.68} ${cx+R*.05} ${cy-R*.74} C${cx-R*.2} ${cy-R*.6} ${cx-R*.12} ${cy-R*.3} ${cx} ${cy}Z" fill="${run?'#ffe082':'#bdbdbd'}" stroke="#555" transform="rotate(${a} ${cx} ${cy})"/>`).join('')+`<circle cx="${cx}" cy="${cy-R*.55}" r="${R*.06}" fill="#d32f2f"/></g><circle cx="${cx}" cy="${cy}" r="${R*.14}" fill="#455a64" stroke="#111"/>`;
+  if(run){const col=dir==='CW'?'#00c853':'#ff6d00',ar=R+(big?28:13),w=big?11:5,cw=dir==='CW';
+    s+=cw?arcArrow(cx,cy,ar,205,325,true,col,w)+arcArrow(cx,cy,ar,25,145,true,col,w):arcArrow(cx,cy,ar,335,215,false,col,w)+arcArrow(cx,cy,ar,155,35,false,col,w);}
+  const lab=run?(dir==='CW'?'يمين (CW) ⟳':'شمال (CCW) ⟲'):(m.single?'⚠ نقص فاز':'واقف');
+  const lcol=run?(dir==='CW'?'#00a843':'#e65100'):m.single?'#c62828':'#555';
+  const mt=c.demo?'DEMO – عرض توضيحي فقط (مش من التوصيل)':run?(m.mode==='star'?'Star ⋆ (بدء)':'Delta △'):'';
+  const demoTxt='Demo اتجاه يدوي: '+(c.demo||'OFF');
+  if(big){s+=`<rect x="${cx-150}" y="${cy+R+22}" width="300" height="56" rx="12" fill="${run?'#fff':'#eceff1'}" stroke="${lcol}" stroke-width="4"/>`+txt(cx,cy+R+62,lab,32,lcol,'800')+txt(cx,cy+R+104,mt,16,c.demo?'#6a1b9a':'#263238','700');
+    s+=`<g data-btn="${c.id}:mode" style="cursor:pointer"><rect x="20" y="490" width="230" height="42" rx="8" fill="#37474f"/>`+txt(135,517,{delta:'دلتا داخلي △',star:'ستار داخلي ⋆',ext:'أطراف خارجية (6)'}[c.mode],15,'#fff')+`</g>`+txt(135,552,'اضغط لتغيير روابط العلبة',11,'#666');
+    s+=`<g data-btn="${c.id}:demo" style="cursor:pointer"><rect x="290" y="490" width="230" height="42" rx="8" fill="${c.demo?'#6a1b9a':'#9575cd'}"/>`+txt(405,517,demoTxt,14,'#fff')+`</g>`+txt(405,552,'للعرض بس – مش بيتحسب في التصحيح',11,'#6a1b9a');}
+  else{s+=txt(cx,186,lab,15,lcol,'800')+txt(cx,203,mt,c.demo?8:11,c.demo?'#6a1b9a':'#333')+
+    `<g data-btn="${c.id}:mode" style="cursor:pointer"><rect x="10" y="172" width="135" height="30" rx="6" fill="#37474f"/>`+txt(77,192,{delta:'دلتا داخلي △',star:'ستار داخلي ⋆',ext:'أطراف خارجية (6)'}[c.mode],12,'#fff')+`</g>`+txt(77,222,'اضغط لتغيير التوصيلة',10,'#666')+
+    `<g data-btn="${c.id}:demo" style="cursor:pointer"><rect x="155" y="212" width="138" height="24" rx="6" fill="${c.demo?'#6a1b9a':'#9575cd'}"/>`+txt(224,229,demoTxt,10,'#fff')+`</g>`}
+  return s}
+DEF.motor.terms=c=>c.big?[['U1',70,130,'r'],['V1',135,130,'r'],['W1',200,130,'r'],['W2',70,220,'k'],['U2',135,220,'k'],['V2',200,220,'k'],['PE',135,268,'g']]:[['U1',30,50,'r'],['V1',75,50,'r'],['W1',120,50,'r'],['W2',30,140,'k'],['U2',75,140,'k'],['V2',120,140,'k']];
+DEF.motor.draw=drawMotor;
+DEF.plcu={w:900,h:1240,title:'PLC UNIT',nolab:true,
+  terms:()=>{const a=[];for(let i=1;i<=8;i++){const y=150+i*62;a.push(['P'+i,70,y,'k','P24'],['I'+i,130,y,'r'])}
+    [[90,790],[220,790],[90,950],[220,950],[90,1110],[220,1110]].forEach(([x,y],i)=>{const k=i<4?'B'+(i+1):'W'+(i-3);a.push([k+'a',x-30,y+(i<4?74:62),'r'],[k+'b',x+30,y+(i<4?74:62),'k'])});
+    for(let n=1;n<=8;n++){const y=200+(n-1)*130;a.push(['Q'+n+'a',760,y,'r'],['Q'+n+'b',832,y,'k'])}return a},
+  btns:()=>[['pb1','no'],['pb2','no'],['pb3','no'],['pb4','no']],
+  edges:c=>{const e=[];for(let i=1;i<=4;i++)e.push(['B'+i+'a','B'+i+'b',!!c.st['pb'+i],'PB'+i+' NO']);for(let i=1;i<=2;i++)e.push(['W'+i+'a','W'+i+'b',!!c.st['sw'+i],'S'+i]);
+    for(let n=1;n<=8;n++)e.push(['Q'+n+'a','Q'+n+'b',!!S.plc.Q[n]&&plcOn(),'Q'+n]);return e},
+  draw:drawPLCU};
+DEF.pwu={w:1640,h:390,title:'PLC TRAINER (POWER UNIT)',nolab:true,
+  terms:()=>{const a=[];['L1','L2','L3','N'].forEach((l,i)=>{a.push([l+'a',80+i*85,200,l==='N'?'k':'r',l],[l+'b',80+i*85,300,l==='N'?'k':'r',l])});a.push(['PE',400,260,'g','PE']);return a},
+  draw:drawPWU};
+function board3(){const a=[];
+  a.push(C('plcu','PLC','PLC',20,20),C('pwu','PU','POWER UNIT',960,20));
+  for(let i=0;i<4;i++)a.push(C('contactor','K'+(i+1),'K'+(i+1),970+i*262,440,{ft:'KM'+(i+1),fill:'#e3f2fb'}));
+  a.push(C('ol','OL2','O.L.2',1232,700,{ft:'O.L.  (K2)',fill:'#e3f2fb'}),C('ol','OL3','O.L.3',1494,700,{ft:'O.L.  (K3)',fill:'#e3f2fb'}));
+  a.push(C('motor','M','M',2040,440,{mode:'delta',big:true,w:550,h:600,title:'MOTOR 3~  (De Lorenzo)'}));
+  return {comps:a,vb:[0,0,2620,1290],name:'PLC – Zelio (Ladder)',bg:bg3};
+}
+function bg3(){let s=`<rect x="0" y="0" width="2620" height="1290" fill="#4b5563"/>`;
+  s+=`<rect x="950" y="420" width="1070" height="680" rx="14" fill="#a8d4ee" stroke="#3f7fa6" stroke-width="6"/>`+txt(1100,1080,'Contactors K1–K4 (KM1–KM4)',16,'#0d2b5e','800');
+  s+=`<rect x="2030" y="420" width="570" height="640" rx="14" fill="#2e333b" stroke="#111" stroke-width="4"/>`;
+  s+=`<foreignObject x="960" y="950" width="1050" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="direction:rtl;font:15px Tahoma,Arial;color:#0d2b5e;line-height:1.7"><b>ملاحظات:</b> كويل الكونتاكتور A1–A2 = 220V (فاز ← Q ← A1 ، A2 ← N). الأطراف 1-3-5 → 2-4-6 للقوى، 13-14 NO، 21-22 NC للـ Interlock. الـ O.L. على K2 و K3: 95-96 NC و 97-98 NO. تسلسل L1-L2-L3 على U1-V1-W1 = يمين CW، بدّل فازتين = شمال CCW.</div></foreignObject>`;
+  s+=`<foreignObject x="1760" y="700" width="250" height="240"><div xmlns="http://www.w3.org/1999/xhtml" style="direction:rtl;font:14px Tahoma,Arial;color:#0d2b5e;line-height:1.6"><b>الخطوات:</b><br/>1) وصّل الدخول والخروج والقوى.<br/>2) اكتب البرنامج في «🪜 Ladder».<br/>3) «نقل للـ PLC» وشغّل الـ MCB.<br/>4) دوس زراير الـ PLC UNIT.</div></foreignObject>`;
+  return s}
+BOARDS[3]=board3;
+
+/* ---------- ladder editor ---------- */
+let LT={tool:'I',n:1,pre:3},LKEY='';
+const TOOLS=[['I','I','كونتاكت دخل NO'],['i','i','كونتاكت دخل NC'],['Q','Q','كونتاكت خرج NO'],['q','q','كونتاكت خرج NC'],['M','M','ريلاي مساعد NO'],['m','m','ريلاي مساعد NC'],['T','T','كونتاكت تايمر NO'],['t','t','كونتاكت تايمر NC'],
+  ['c:[:Q','[ Q','كويل خرج عادي'],['c:S:Q','S Q','Set خرج'],['c:R:Q','R Q','Reset خرج'],['c:[:M','[ M','كويل M'],['c:S:M','S M','Set M'],['c:R:M','R M','Reset M'],['c:TT:T','TT','كويل تايمر (A on-delay)'],
+  ['-','───','وصلة أفقية'],['|','│','وصلة رأسية (يمين الخانة لتحت)'],['del','⌫','مسح']];
+function ladToolsHTML(){return `<div class="lt">`+TOOLS.map(t=>`<button class="lb ${LT.tool===t[0]?'on':''}" title="${t[2]}" onclick="LT.tool='${t[0]}';ladTools()">${esc(t[1])}</button>`).join('')+
+  `<span class="lsep">رقم:</span><select onchange="LT.n=+this.value">${[1,2,3,4,5,6,7,8].map(n=>`<option ${n===LT.n?'selected':''}>${n}</option>`).join('')}</select>`+
+  `<span class="lsep">زمن TT (ث):</span><input type="number" min="0.5" max="999" step="0.5" value="${LT.pre}" style="width:60px" onchange="LT.pre=+this.value||1">`+
+  `<span class="lsep"></span><button class="lb run" id="lrun" onclick="plcRun(true)">▶ محاكاة / Run</button><button class="lb stp" onclick="plcRun(false)">■ Stop</button><button class="lb xfer" onclick="plcTransfer()">⇪ نقل للـ PLC</button><button class="lb" onclick="ladRows()">+ سطر</button><button class="lb" onclick="ladClear()">🗑 مسح البرنامج</button></div>`}
+function ladTools(){$('ltools').innerHTML=ladToolsHTML();LKEY='';renderLadder()}
+function plcRun(v){if(v){S.cmap.PLC.st.pw=true;S.plc.run=true}else S.plc.run=false;solve();render()}
+function plcTransfer(){S.cmap.PLC.st.pw=true;S.plc.run=true;S.plc.F={};solve();setView('wire');toast('اتنقل البرنامج للـ PLC ✔ (RUN) – دوس زراير الـ PLC UNIT');}
+function ladRows(){if(S.lad.rows<30){S.lad.rows++;LKEY='';renderLadder()}}
+function ladClear(){if(!S.quiet&&!confirm('تمسح البرنامج كله؟'))return;S.lad=newLad();solve();render()}
+function ladClick(r,c){const L=S.lad,t=LT.tool;let k=r+'_'+c;
+  if(t==='del'){delete L.cells[k];delete L.V[k]}
+  else if(t==='|'){if(c<5&&r<L.rows-1){if(L.V[k])delete L.V[k];else L.V[k]=1}else return toast('الوصلة الرأسية في أعمدة الكونتاكتات بس')}
+  else if(t.startsWith('c:')){const [,kk,tt]=t.split(':');k=r+'_5';L.cells[k]={k:kk,t:tt,n:LT.n};if(kk==='TT')L.pre[LT.n]=LT.pre;
+    let last=-1;for(let cc=0;cc<5;cc++)if(L.cells[r+'_'+cc])last=cc;for(let cc=last+1;cc<5;cc++)L.cells[r+'_'+cc]={t:'-'}}
+  else{if(c===5)return toast('العمود ده للكويلات بس');L.cells[k]=t==='-'?{t:'-'}:{t,n:LT.n}}
+  solve();render()}
+function ladDel(r,c){delete S.lad.cells[r+'_'+c];delete S.lad.V[r+'_'+c];solve();render()}
+function cellSVG(L,r,c,vis){const x=L.cells[r+'_'+c],y=32,P=S.plc;const R='#e53935',K='#222';
+  const nd=k=>!!(vis&&vis.nd[k]);const pin=nd(r+'_'+c),pout=nd(r+'_'+(c+1)),pass=!!(vis&&vis.pass[r+'_'+c]);
+  const ln=(x1,y1,x2,y2,on,w=2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${on?R:K}" stroke-width="${on?w+1:w}"/>`;
+  let s='';
+  if(x&&c<5){if(x.t==='-')s+=ln(0,y,96,y,pin);
+    else{const pl=pass&&vis;s+=ln(0,y,38,y,pin)+ln(58,y,96,y,pin&&pass)+ln(38,y-12,38,y+12,pl,2.5)+ln(58,y-12,58,y+12,pl,2.5);
+      if(x.t===x.t.toLowerCase())s+=ln(34,y+12,62,y-12,pl,2);
+      if(x.t==='T'||x.t==='t')s+=`<path d="M41 ${y-17} q7 -7 14 0" fill="none" stroke="${K}"/>`;
+      if(pl)s+=`<rect x="36" y="${y-14}" width="24" height="28" fill="${R}" opacity=".18"/>`;
+      s+=`<text x="48" y="13" font-size="12" font-weight="700" text-anchor="middle" fill="#0d47a1" font-family="Arial">${x.t}${x.n}</text>`}}
+  if(x&&c===5){const on=x.k==='TT'?!!(P.T[x.n]&&P.T[x.n].en&&vis):!!((x.t==='M'?P.M:P.Q)[x.n]&&vis);const pw=!!(vis&&vis.coil[r]);
+    s+=ln(0,y,30,y,pw)+`<path d="M38 ${y-13} q-9 13 0 26 M58 ${y-13} q9 13 0 26" fill="none" stroke="${on?R:K}" stroke-width="2.5"/>`+(on?`<ellipse cx="48" cy="${y}" rx="11" ry="12" fill="${R}" opacity=".35"/>`:'')+
+      `<text x="48" y="${y+5}" font-size="13" font-weight="800" text-anchor="middle" fill="${on?R:K}" font-family="Arial">${x.k==='['?'':x.k==='TT'?'T':x.k}</text>`+
+      `<text x="48" y="13" font-size="12" font-weight="700" text-anchor="middle" fill="#0d47a1" font-family="Arial">${x.k==='TT'?'TT'+x.n:(x.k==='['?'[ ':x.k+' ')+x.t+x.n}</text>`+(x.k==='TT'?`<text x="78" y="52" font-size="10" text-anchor="middle" fill="#555" font-family="Arial">${L.pre[x.n]||1}s</text>`:'')}
+  if(L.V[r+'_'+c])s+=ln(95,y,95,56,pout);
+  if(r>0&&L.V[(r-1)+'_'+c])s+=ln(95,0,95,y,nd((r-1)+'_'+(c+1)));
+  return `<svg viewBox="0 0 96 56" class="lcs">${s}</svg>`}
+function ladTableHTML(L,vis,mini){const run=!!vis;let h=`<table class="lgt ${mini?'mini':''}"><tr><th></th><th class="railh"></th>${[1,2,3,4,5].map(c=>`<th>${c}</th>`).join('')}<th>Coil</th><th>${mini?'':'Comment'}</th></tr>`;
+  for(let r=0;r<L.rows;r++){if(mini&&r>=Math.max(...Object.keys(L.cells).map(k=>+k.split('_')[0]),0)+1)break;
+    h+=`<tr><td class="rn">${String(r+1).padStart(3,'0')}</td><td class="rail ${run?'on':''}"></td>`;
+    for(let c=0;c<6;c++)h+=`<td class="lc ${c===5?'coil':''}" ${mini?'':`data-r="${r}" data-c="${c}"`}>${cellSVG(L,r,c,vis)}</td>`;
+    h+=mini?`<td class="cmt">${esc(L.com[r]||'')}</td>`:`<td class="cmt"><input class="lcom" data-r="${r}" value="${esc(L.com[r]||'').replace(/"/g,'&quot;')}" placeholder="تعليق" onchange="S.lad.com[${r}]=this.value"></td>`;h+='</tr>'}
+  return h+'</table>'}
+function renderLadder(force){if(S.board!==3||S.view!=='lad'||S.quiet)return;const P=S.plc;const vis=P.run&&plcOn()?P.vis:null;
+  const key=JSON.stringify([S.lad,vis,P.I,P.Q,P.M,P.T,P.run,plcOn(),LT,Math.floor(S.now/200)]);if(!force&&key===LKEY)return;LKEY=key;
+  const ae=document.activeElement;if(ae&&ae.classList&&ae.classList.contains('lcom')&&!force){}else $('lgrid').innerHTML=ladTableHTML(S.lad,vis,false);
+  const on=plcOn();let h=`<div class="lcd"><div>${on?(P.run?'RUN ▶':'STOP ■'):'PLC OFF'}</div><div>I ${[1,2,3,4,5,6,7,8].map(n=>`<span class="${on&&P.I[n]?'inv':''}">${n}</span>`).join('')}</div><div>Q ${[1,2,3,4,5,6,7,8].map(n=>`<span class="${on&&P.Q[n]?'inv':''}">${n}</span>`).join('')}</div></div>`;
+  h+=`<div class="lsec"><b>الدخول (اضغط للمحاكاة):</b><div class="lio">`+[1,2,3,4,5,6,7,8].map(n=>`<button class="lin ${P.I[n]?'on':''}" onclick="S.plc.F[${n}]=!S.plc.F[${n}];solve();render()">I${n}${P.F[n]?' ✋':''}${P.hw[n]?' 🔌':''}</button>`).join('')+`</div><small>✋ = مفعّل من هنا، 🔌 = من زرار حقيقي على الـ PLC UNIT</small></div>`;
+  h+=`<div class="lsec"><b>الخروج:</b><div class="lio">`+[1,2,3,4,5,6,7,8].map(n=>`<span class="lq ${P.Q[n]?'on':''}">Q${n}</span>`).join('')+`</div></div>`;
+  h+=`<div class="lsec"><b>M:</b> `+[1,2,3,4,5,6,7,8].map(n=>`<span class="lq sm ${P.M[n]?'on':''}">M${n}</span>`).join('')+`</div>`;
+  const tu=[...new Set(Object.values(S.lad.cells).filter(x=>x.k==='TT'||(x.t==='T'||x.t==='t')).map(x=>x.n))].sort();
+  h+=`<div class="lsec"><b>التايمرات (نوع A – On-delay):</b>`+(tu.length?tu.map(n=>{const T=P.T[n];return `<div>T${n}: <input type="number" min="0.5" step="0.5" value="${S.lad.pre[n]||1}" style="width:56px" onchange="S.lad.pre[${n}]=+this.value||1;LKEY=''"> ث ${T&&T.en?(T.done?'✔ خلص':'⏳ '+(Math.max(0,(S.lad.pre[n]||1)-(S.now-T.t0)/1000)).toFixed(1)):''}</div>`}).join(''):' —')+`</div>`;
+  h+=`<div class="lsec" style="font-size:12px;color:#444">اختار عنصر من فوق ودوس على خانة. كليك يمين = مسح. الكويلات في عمود Coil. الوصلة الرأسية بتتعمل على يمين الخانة لتحت (للتوازي/التثبيت). الأحمر = فيه باور في المحاكاة.</div>`;
+  $('lsim').innerHTML=h;$('lrun')&&$('lrun').classList.toggle('on',!!(P.run&&on))}
+function setView(v){S.view=v;$('ladder').style.display=v==='lad'?'flex':'none';$('vb1').classList.toggle('on',v==='wire');$('vb2').classList.toggle('on',v==='lad');if(v==='lad'){ladTools();renderLadder(true)}else{fitView();render()}}
+function setupLadder(){const g=$('lgrid');g.addEventListener('click',e=>{const td=e.target.closest('td[data-c]');if(td)ladClick(+td.dataset.r,+td.dataset.c)});
+  g.addEventListener('contextmenu',e=>{const td=e.target.closest('td[data-c]');if(td){e.preventDefault();ladDel(+td.dataset.r,+td.dataset.c)}})}
+
+/* ---------- chain explanation ---------- */
+const CNAME={I:n=>`I${n} مقفول`,i:n=>`i${n} (I${n} مش مضغوط)`,Q:n=>`Q${n} (تثبيت)`,q:n=>`q${n} (Q${n} مطفي)`,M:n=>`M${n}`,m:n=>`m${n}`,T:n=>`T${n} خلص العد`,t:n=>`t${n} (لسه بيعد)`};
+function pbFor(n){if(!S.net)return null;const r=S.net.root('PLC.I'+n);for(let k=1;k<=4;k++)if(S.net.root('PLC.B'+k+'a')===r)return PBN['pb'+k]+' مضغوط';for(let k=1;k<=2;k++)if(S.net.root('PLC.W'+k+'a')===r)return 'S'+k+' مقفول';return null}
+function plcChains(){const P=S.plc,L=S.lad,out=[];if(!P.vis)return out;const groups=ladGroups(L);
+  for(let n=1;n<=8;n++){if(!P.Q[n])continue;const parts=[];
+    for(let r=0;r<L.rows;r++){const x=L.cells[r+'_5'];if(!x||x.t!=='Q'||x.n!==n||x.k==='R')continue;const g=groups.find(g=>g.includes(r));
+      if(!P.vis.coil[r]){if(x.k==='S')parts.push(`Q${n} متثبت (Set)`);continue}
+      for(const rr of g)for(let c=0;c<5;c++){const y=L.cells[rr+'_'+c];if(!y||y.t==='-')continue;if(P.vis.pass[rr+'_'+c]&&P.vis.nd[rr+'_'+c]){if(y.t==='I'){const pb=pbFor(y.n);if(pb)parts.push(pb)}parts.push(CNAME[y.t](y.n))}}
+      break}
+    parts.push(`Q${n} اتشغل`);
+    for(const K of S.comps.filter(c=>c.type==='contactor'&&c.st.on)){const t=trace(K.id);if(t&&t.qs.includes('Q'+n))parts.push(`${K.label} (${K.ft}) اتشغل`)}
+    if(S.motor.run&&parts.some(p=>/^K\d/.test(p)))parts.push(`الموتور شغال ${S.motor.dir==='CW'?'يمين (CW)':'شمال (CCW)'} – ${S.motor.mode==='star'?'ستار':'دلتا'}`);
+    out.push([...new Set(parts)])}
+  return out}
+function plcChainHTML(){const P=S.plc;let h=`<h3>🪜 PLC – سلسلة التشغيل</h3><div class="sec"><div>الـ PLC: ${!plcOn()?'<b style="color:#c62828">مطفي – شغّل POWER</b>':P.run?'<b style="color:#2e7d32">RUN ▶</b>':'<b style="color:#ef6c00">STOP ■ (افتح Ladder ودوس Run أو نقل للـ PLC)</b>'}</div>`;
+  const ch=plcChains();h+=ch.length?ch.map(c=>`<div class="step ok">${c.map(esc).join(' ← ')}</div>`).join(''):'<div class="step">مفيش خرج Q شغال دلوقتي.</div>';
+  const ins=[1,2,3,4,5,6,7,8].filter(n=>P.I[n]);if(ins.length)h+=`<div style="font-size:12px;margin-top:4px">الدخول المقفولة: ${ins.map(n=>'I'+n).join('، ')}</div>`;
+  return h+'</div>'}
+
+/* ---------- PLC exercises ---------- */
+function pc(s){return s==='-'?{t:'-'}:{t:s[0],n:+s.slice(1)}}
+function pcoil(s){return s.startsWith('TT')?{k:'TT',t:'T',n:+s.slice(2)}:{k:s[0],t:s[1],n:+s.slice(2)}}
+function mkLad(rows,V,pre){const L=newLad();rows.forEach((row,r)=>{(row[0]||[]).forEach((s,c)=>{if(s)L.cells[r+'_'+c]=pc(s)});if(row[1])L.cells[r+'_5']=pcoil(row[1]);if(row[2])L.com[r]=row[2]});(V||[]).forEach(v=>L.V[v]=1);Object.assign(L.pre,pre||{});return L}
+const PEXS=[
+ {id:'p_dol',t:'(أ) تشغيل وإيقاف موتور بالـ PLC',d:'PB1 (أخضر) ← I1 = START، PB2 (أحمر) ← I2 = STOP. البرنامج: I1 يشغل Q1 بتثبيت ذاتي (أو S/R) و I2 يفصله. Q1 يشغل كونتاكتور (مثلاً K2 مع الـ O.L. 95-96 بالتوالي مع الكويل)، والكونتاكتور يشغل الموتور 3 فاز. الـ O.L. (TRIP) لازم يفصل الموتور.',
+  ref:mkLad([[['I1','i2','-','-','-'],'[Q1','START / STOP'],[['Q1'],'','تثبيت ذاتي Q1']],['0_0']),
+  wire:'+24V ← PB1 ← I1 ، +24V ← PB2 ← I2 | L1 ← Q1 ، Q1 ← O.L.2 95 ، 96 ← K2 A1 ، A2 ← N | L1 L2 L3 ← K2 1-3-5 ، 2-4-6 ← O.L.2 1-3-5 ، 2-4-6 ← U1 V1 W1'},
+ {id:'p_fr',t:'(ب) عكس حركة الموتور يمين/شمال بالـ PLC + Interlock',d:'I1 = يمين (CW)، I2 = شمال (CCW)، I3 = STOP. Q1 ← K2 (يمين: L1 L2 L3 على U1 V1 W1)، Q2 ← K3 (شمال: بدّل L1 و L3). Interlock في البرنامج (q2 في سطر Q1 و q1 في سطر Q2) وفي الكونتاكتورات (21-22 من K3 في طريق كويل K2 والعكس).',
+  ref:mkLad([[['I1','i3','q2','-','-'],'[Q1','يمين CW'],[['Q1'],'','تثبيت'],[['I2','i3','q1','-','-'],'[Q2','شمال CCW'],[['Q2'],'','تثبيت']],['0_0','2_0']),
+  wire:'+24V ← PB1 ← I1 ، PB3 ← I2 ، PB2 ← I3 | L1 ← Q1 ، Q1 ← K3 21 ، 22 ← K2 A1 | L1 ← Q2 ، Q2 ← K2 21 ، 22 ← K3 A1 | A2 ← N | K2: L1 L2 L3 ← 1-3-5 ، 2-4-6 ← U1 V1 W1 | K3: L3 L2 L1 ← 1-3-5 ، 2-4-6 ← U1 V1 W1'},
+ {id:'p_sd',t:'(ج) ستار/دلتا بالتايمر بالـ PLC',d:'خلي الموتور «أطراف خارجية (6)». I1 = START، I2 = STOP. Q1 ← K1 (رئيسي U1 V1 W1)، Q2 ← K2 (ستار: يقفل W2 U2 V2)، Q3 ← K3 (دلتا: U1-W2، V1-U2، W1-V2). TT1 بيعد 3 ثواني وبعدها الستار يفصل والدلتا يشتغل. Interlock بين Q2 و Q3.',
+  ref:mkLad([[['I1','i2','-','-','-'],'[Q1','KM رئيسي'],[['Q1'],'','تثبيت'],[['Q1','-','-','-','-'],'TT1','تايمر 3 ث'],[['Q1','t1','q3','-','-'],'[Q2','ستار ⋆'],[['Q1','T1','q2','-','-'],'[Q3','دلتا △']],['0_0'],{1:3}),
+  wire:'+24V ← PB1 ← I1 ، PB2 ← I2 | L1 ← Q1 ← K1 A1 ، L1 ← Q2 ← K3 21-22 ← K2 A1 ، L1 ← Q3 ← K2 21-22 ← K3 A1 ، A2 ← N | K1: L1 L2 L3 → U1 V1 W1 | K2: W2 U2 V2 ← 1-3-5 و 2-4-6 مقصورين | K3: U1→W2 ، V1→U2 ، W1→V2'}
+];
+const Pq=()=>{const a=[];for(let n=1;n<=8;n++)if(S.plc.Q[n])a.push(n);return a};
+function RP(){R();const P=S.plc;P.ov={};for(let n=1;n<=8;n++)P.ov[n]=!!P.hw[n];P.base=Object.assign({},P.ov);solve();adv(100)}
+function tg(n,on){const P=S.plc;P.ov[n]=on?!P.base[n]:!!P.base[n];solve()}
+function pFindStarts(goal){const ok=[],partial=[];for(let n=1;n<=8;n++){RP();tg(n,1);adv(200);const a=goal();const q=Pq();tg(n,0);adv(200);if(a&&goal())ok.push({n,q:Pq()});else if(a)partial.push({n,q})}return {ok,partial}}
+function pStops(n,goal){const out=[];for(let m=1;m<=8;m++){if(m===n)continue;RP();tg(n,1);adv(200);tg(n,0);adv(200);if(!goal())continue;tg(m,1);adv(200);const a=goal();tg(m,0);adv(200);if(!a&&!goal())out.push(m)}return out}
+function pStopsHW(b,goal){const out=[];for(const t of btnList('no')){if(t.b===b.b)continue;R();press(b);adv(300);release(b);adv(300);if(!goal())continue;press(t);adv(300);const a=goal();release(t);adv(300);if(!a&&!goal())out.push(t)}return out}
+function coilWarn(){const f=S.faults.find(f=>/K\d|PLC|دخل/.test(f[1]));return f?' ('+f[1]+')':''}
+function hwDiag(T,inN,q,what){
+  let pb=null;for(const b of btnList('no')){R();press(b);adv(200);const hit=S.plc.hw[inN];release(b);adv(100);if(hit){pb=b;break}}
+  if(!pb){R();const w=S.faults.find(f=>/دخل/.test(f[1]));T.push({ok:false,m:`🔌 التوصيل: مفيش زرار في الـ PLC UNIT واصل للدخل I${inN} ← وصّل + (24V) ← طرف الزرار، والطرف التاني ← I${inN}.`+(w?' ('+w[1]+')':'')});return}
+  R();press(pb);adv(300);
+  if(!S.plc.Q[q]){T.push({ok:false,m:`🔌 ${lbl(pb)} بيقفل I${inN} لكن Q${q} مش بيشتغل في الهاردوير – اتأكد إن الـ PLC شغال (POWER) وإن البرنامج اتنقل.`});return}
+  const k=S.comps.filter(c=>c.type==='contactor'&&c.st.on);
+  if(!k.length){T.push({ok:false,m:`🔌 التوصيل: Q${q} اشتغل (لمبته نورت) لكن مفيش كونتاكتور اشتغل ← وصّل فاز L1 ← Q${q} (الأحمر)، و Q${q} (الأسود) ← A1 بتاع الكونتاكتور (ممكن عن طريق O.L. 95-96 أو 21-22)، و A2 ← N.`+coilWarn()});return}
+  const mf=S.faults.find(f=>/الموتور/.test(f[1]));
+  T.push({ok:false,m:`🔌 التوصيل: ${k.map(c=>c.label).join(' و ')} اشتغل لكن ${what} مش بيحصل ← راجع دايرة القوى: L1 L2 L3 ← 1-3-5 ← 2-4-6 ← (O.L.) ← U1 V1 W1.`+(mf?' '+mf[1]:'')})}
+Object.assign(CHECKS,{
+ p_dol(){const T=[];RP();if(Pq().length){T.push({ok:false,m:`🪜 البرنامج: Q${Pq()[0]} شغال من غير ما تدوس أي زرار!`});return {tests:T}}
+  const f=pFindStarts(()=>Pq().length>0);
+  if(!f.ok.length){T.push({ok:false,m:f.partial.length?`🪜 البرنامج: Q${f.partial[0].q[0]} بيشتغل وانت دايس على I${f.partial[0].n} بس وبيقف لما تسيب ← ناقص التثبيت الذاتي: حط كونتاكت Q${f.partial[0].q[0]} تحت I${f.partial[0].n} ووصلة رأسية (توازي)، أو استخدم S Q و R Q.`:'🪜 البرنامج: مفيش دخل I بيشغل أي خرج Q. اعمل سطر: I1 ثم i2 ثم كويل [ Q1.'});return {tests:T}}
+  const s=f.ok[0],q=s.q[0];T.push({ok:true,m:`🪜 البرنامج: I${s.n} بيشغل Q${q} ويفضل شغال بعد ما تسيب (تثبيت ✔)`});
+  const st=pStops(s.n,()=>!!S.plc.Q[q]);if(!st.length){T.push({ok:false,m:`🪜 البرنامج: مفيش دخل بيوقف Q${q} ← حط i2 (NC) في نفس السطر قبل الكويل، أو R Q${q} من I2.`});return {tests:T}}
+  T.push({ok:true,m:`🪜 البرنامج: I${st[0]} بيوقف Q${q}`});
+  if(!powerOnCheck(T))return {tests:T};if(run()){T.push({ok:false,m:'🔌 الموتور بيشتغل لوحده من غير ما تدوس!'});return {tests:T}}
+  const hf=findStarts(run);if(!hf.ok.length){if(hf.trip)T.push({ok:false,m:'🔌 حصل قصر: '+hf.trip.msg});else hwDiag(T,s.n,q,'الموتور يدور');return {tests:T}}
+  const hs=hf.ok[0];T.push({ok:true,m:`🔌 ${lbl(hs)} بيشغل الموتور (${S.motor.dir==='CCW'?'شمال (CCW)':'يمين (CW)'}) ويفضل شغال`});
+  const hst=pStopsHW(hs,run);T.push(hst.length?{ok:true,m:`🔌 ${lbl(hst[0])} بيوقف الموتور`}:{ok:false,m:`🔌 التوصيل: مفيش زرار بيوقف الموتور ← وصّل + (24V) ← PB2 ← I${st[0]}.`});
+  let olok=false,has=false;for(const o of S.comps.filter(c=>c.type==='ol')){R();press(hs);adv(300);release(hs);adv(300);o.st.t=true;solve();adv(300);if(!run()){olok=true;break}}
+  T.push(olok?{ok:true,m:'🔌 الـ O.L. (TRIP) بيفصل الموتور'}:{ok:false,m:'🔌 التوصيل: لما الـ O.L. عمل TRIP الموتور فضل شغال ← وصّل 95-96 (NC) بتاع الـ O.L. بالتوالي في طريق كويل الكونتاكتور (Q ← 95 ، 96 ← A1)، وعدّي القوى على الـ O.L.'});
+  return {tests:T}},
+ p_fr(){const T=[];RP();if(Pq().length){T.push({ok:false,m:`🪜 البرنامج: Q${Pq()[0]} شغال لوحده!`});return {tests:T}}
+  const f=pFindStarts(()=>Pq().length>0);const a=f.ok[0],b=a&&f.ok.find(x=>x.q[0]!==a.q[0]);
+  if(!a||!b){T.push({ok:false,m:f.partial.length?`🪜 البرنامج: Q${f.partial[0].q[0]} بيشتغل مع I${f.partial[0].n} وبيقف لما تسيب ← ناقص تثبيت ذاتي.`:'🪜 البرنامج: محتاج دخلين: I1 يشغل Q1 (يمين) و I2 يشغل Q2 (شمال)، كل واحد بتثبيت ذاتي.'});return {tests:T}}
+  const qa=a.q[0],qb=b.q[0];T.push({ok:true,m:`🪜 البرنامج: I${a.n} ← Q${qa} و I${b.n} ← Q${qb} بتثبيت ✔`});
+  const s1=pStops(a.n,()=>!!S.plc.Q[qa]),s2=pStops(b.n,()=>!!S.plc.Q[qb]);const sc=s1.filter(x=>s2.includes(x));
+  T.push(sc.length?{ok:true,m:`🪜 البرنامج: I${sc[0]} بيوقف الاتجاهين`}:{ok:false,m:'🪜 البرنامج: مفيش STOP بيوقف Q1 و Q2 الاتنين ← حط i3 في السطرين.'});
+  let il=true;for(const [x,y,qx,qy] of [[a,b,qa,qb],[b,a,qb,qa]]){RP();tg(x.n,1);adv(200);tg(x.n,0);adv(200);tg(y.n,1);adv(200);if(S.plc.Q[qx]&&S.plc.Q[qy]){il=false;T.push({ok:false,m:`🪜 البرنامج: لما Q${qx} شغال ودوست I${y.n}، Q${qy} اشتغل كمان ← ناقص Interlock في البرنامج: حط q${qy} (NC) في سطر Q${qx} و q${qx} في سطر Q${qy}.`});break}}
+  if(il)T.push({ok:true,m:'🪜 البرنامج: Interlock موجود – Q1 و Q2 عمرهم ما بيشتغلوا مع بعض'});
+  if(!powerOnCheck(T))return {tests:T};if(run()){T.push({ok:false,m:'🔌 الموتور بيشتغل لوحده!'});return {tests:T}}
+  const cw=()=>run()&&S.motor.dir==='CW',ccw=()=>run()&&S.motor.dir==='CCW';const f1=findStarts(cw),f2=findStarts(ccw);
+  if(f1.trip||f2.trip){T.push({ok:false,m:'🔌 حصل قصر: '+(f1.trip||f2.trip).msg});return {tests:T}}
+  if(!f1.ok.length&&!f2.ok.length){hwDiag(T,a.n,qa,'الموتور يدور');return {tests:T}}
+  if(!f1.ok.length||!f2.ok.length){T.push({ok:false,m:`🔌 التوصيل: الموتور بيلف ${f1.ok.length?'يمين (CW)':'شمال (CCW)'} بس – الكونتاكتور التاني لازم يبدّل فازتين (مثلاً L1↔L3) قبل U1 V1 W1، وكويله يتوصل من Q${f1.ok.length?qb:qa}.`});return {tests:T}}
+  T.push({ok:true,m:`🔌 ${lbl(f1.ok[0])} ← الموتور يمين (CW) ، ${lbl(f2.ok[0])} ← الموتور شمال (CCW)`});
+  const h1=pStopsHW(f1.ok[0],run),h2=pStopsHW(f2.ok[0],run);T.push(h1.length&&h2.length?{ok:true,m:'🔌 STOP بيوقف الاتجاهين'}:{ok:false,m:'🔌 زرار STOP مش بيوقف الموتور في الاتجاهين.'});
+  const qOf=b=>{R();press(b);adv(300);release(b);adv(300);return Pq()[0]};const qcw=qOf(f1.ok[0]),qccw=qOf(f2.ok[0]);let hil=true,msg='';
+  for(const [btn,qo] of [[f1.ok[0],qccw],[f2.ok[0],qcw]]){R();press(btn);adv(300);release(btn);adv(300);S.plc.forceQ[qo]=true;solve();adv(300);const k=S.comps.filter(c=>c.type==='contactor'&&c.st.on).length;if(S.trip||k>=2){hil=false;msg=S.trip?S.trip.msg:''}S.plc.forceQ={};solve()}
+  T.push(hil?{ok:true,m:'🔌 Interlock الكونتاكتورات شغال: حتى لو الخرجين اتقفلوا، الكونتاكتور التاني مش بيمسك'}:{ok:false,m:'🔌 التوصيل: مفيش Interlock في الكونتاكتورات – لما الخرج التاني اتقفل والموتور شغال، الكونتاكتورين مسكوا مع بعض (قصر!) ← وصّل 21-22 (NC) من كل كونتاكتور في طريق كويل التاني (Q ← 21 ، 22 ← A1). '+msg});
+  return {tests:T}},
+ p_sd(){const T=[];if(S.cmap.M.mode!=='ext'){T.push({ok:false,m:'🔌 الموتور لازم يكون «أطراف خارجية (6)» – دوس على زرار الروابط في بلوك الموتور.'});return {tests:T}}
+  RP();if(Pq().length){T.push({ok:false,m:'🪜 البرنامج: فيه خرج شغال لوحده!'});return {tests:T}}
+  let s=null,set0=[];for(let n=1;n<=8;n++){RP();tg(n,1);adv(200);tg(n,0);adv(200);if(Pq().length>=2){s=n;set0=Pq();break}if(Pq().length===1&&!s){set0=Pq()}}
+  if(!s){T.push({ok:false,m:set0.length?`🪜 البرنامج: عند الـ START بيشتغل خرج واحد بس (Q${set0[0]}) ← لازم Q1 (رئيسي) و Q2 (ستار) يشتغلوا مع بعض بتثبيت.`:'🪜 البرنامج: مفيش دخل بيشغل الخروج مع تثبيت.'});return {tests:T}}
+  T.push({ok:true,m:`🪜 البرنامج: I${s} بيشغل ${set0.map(q=>'Q'+q).join(' + ')} (ستار) بتثبيت`});
+  let set1=set0,both=false;for(let t=0;t<maxPre()*1000+1500;t+=100){adv(100);const c=Pq();if(c.join()!==set0.join()){set1=c}}
+  const off=set0.filter(q=>!set1.includes(q)),on=set1.filter(q=>!set0.includes(q)),main=set0.filter(q=>set1.includes(q));
+  if(!on.length){T.push({ok:false,m:'🪜 البرنامج: مفيش تحويل لدلتا بعد التايمر ← استخدم كويل TT1 من Q1، و T1 (NO) لخرج الدلتا و t1 (NC) لخرج الستار.'});return {tests:T}}
+  if(!off.length){T.push({ok:false,m:`🪜 البرنامج: Q${on[0]} (دلتا) اشتغل لكن الستار مافصلش – الاتنين شغالين مع بعض (قصر!) ← حط t1 (NC) و q${on[0]} (Interlock) في سطر الستار.`});return {tests:T}}
+  if(!main.length){T.push({ok:false,m:'🪜 البرنامج: الخرج الرئيسي فصل وقت التحويل ← الرئيسي لازم يفضل شغال.'});return {tests:T}}
+  T.push({ok:true,m:`🪜 البرنامج: بعد ${maxPre()} ث Q${off[0]} (ستار) فصل و Q${on[0]} (دلتا) اشتغل و Q${main[0]} فضل شغال`});
+  const st=pStops(s,()=>Pq().length>0);T.push(st.length?{ok:true,m:`🪜 البرنامج: I${st[0]} بيوقف الكل`}:{ok:false,m:'🪜 البرنامج: مفيش STOP بيوقف كل الخروج.'});
+  if(!powerOnCheck(T))return {tests:T};if(run()){T.push({ok:false,m:'🔌 الموتور بيشتغل لوحده!'});return {tests:T}}
+  const star=()=>run()&&S.motor.mode==='star';let b=null;for(const x of btnList('no')){R();press(x);adv(250);const a=star();release(x);adv(150);if(a&&star()){b=x;break}}
+  if(!b){let any=null;for(const x of btnList('no')){R();press(x);adv(250);if(run()){any=S.motor.mode;break}}
+    if(any==='delta')T.push({ok:false,m:'🔌 التوصيل: الموتور بيبدأ دلتا على طول ← كونتاكتور الستار لازم يقصّر W2 U2 V2 (1-3-5 عليهم و 2-4-6 مقصورين مع بعض).'});else hwDiag(T,s,main[0],'الموتور يبدأ ستار');return {tests:T}}
+  T.push({ok:true,m:`🔌 ${lbl(b)} بيبدأ الموتور ستار ⋆`});
+  let sawD=false,trip=null;for(let t=0;t<maxPre()*1000+1500;t+=100){adv(100);if(S.trip){trip=S.trip;break}if(run()&&S.motor.mode==='delta')sawD=true}
+  if(trip){T.push({ok:false,m:'🔌 حصل قصر وقت التحويل: '+trip.msg+' ← Interlock بين كونتاكتور الستار والدلتا (21-22).'});return {tests:T}}
+  T.push(sawD&&run()?{ok:true,m:'🔌 بعد التايمر الموتور اتحول دلتا △ وفضل شغال'}:{ok:false,m:'🔌 التوصيل: الموتور مااتحولش دلتا ← كونتاكتور الدلتا يوصّل U1-W2 ، V1-U2 ، W1-V2، وكويله من Q'+on[0]+'.'});
+  const hst=pStopsHW(b,run);T.push(hst.length?{ok:true,m:'🔌 STOP بيوقف الموتور'}:{ok:false,m:'🔌 زرار STOP مش بيوقف الموتور.'});
+  return {tests:T}}
+});
+let SHOWREF=false;
+function loadRef(id){const e=PEXS.find(x=>x.id===id);if(!e)return;S.lad=JSON.parse(JSON.stringify(e.ref));solve();render();toast('اتحمل البرنامج المرجعي في المحرر ✔')}
+
+/* ================= navigation ================= */
+let TIMER=null;
+function selectBoard(n){buildBoard(n);S.wires=[];S.hist=[];S.trip=null;S.sel=null;S.traceLoad='';EX=null;EXRES=null;
+  $('start').style.display='none';$('app').style.display='flex';$('bname').textContent=n===3?S.B.name:'اللوحة '+n+': '+S.B.name;
+  $('vbtns').style.display=n===3?'inline':'none';S.view='wire';$('ladder').style.display='none';$('vb1').classList.add('on');$('vb2').classList.remove('on');if(n===3){plcReset(false);LKEY=''}
+  solve();render();fitView();if(!TIMER)TIMER=setInterval(tick,100);
+  if(!localStorage.getItem('ctrlsim_help')){localStorage.setItem('ctrlsim_help','1');showHelp(1)}}
+function goHome(){$('ladder').style.display='none';S.view='wire';$('app').style.display='none';$('start').style.display='flex';S.board=0}
+function showHelp(v){$('help').style.display=v?'flex':'none'}
+function thumbs(){for(const n of [1,2,3]){buildBoard(n);S.net=null;S.dist={};S.motor={};$('th'+n).innerHTML=`<svg viewBox="${S.B.vb.join(' ')}" style="direction:ltr">${defs()}${S.B.bg()}${S.comps.map(c=>compSVG(c,false)).join('').replace(/data-(term|btn)=/g,'data-t=')}</svg>`}S.board=0}
+$('colors').innerHTML=Object.keys(WCOL).map(c=>`<span class="sw ${c===S.color?'sel':''}" title="${WCOL[c]}" style="background:${c}" onclick="S.color='${c}';document.querySelectorAll('.sw').forEach(x=>x.classList.remove('sel'));this.classList.add('sel')"></span>`).join(' ');
+setupEvents();setupLadder();thumbs();
+// public API for testing
+window.APP={selectBoard,addWire,delWire,clearAll:()=>{S.wires=[];solve();render()},setPower:v=>{setPower(v);solve();render()},
+  press:(cid,b='b')=>btnAction(cid+':'+b,true),release:(cid,b='b')=>btnAction(cid+':'+b,false),click:(cid,b)=>btnAction(cid+':'+b,true),
+  state:cid=>S.cmap[cid].st,motor:()=>S.motor,power:powerOn,trip:()=>S.trip,runCheck,advance:ms=>{adv(ms);render()},S,trace,setMode:m=>{S.cmap.M.mode=m;solve();render()},
+  setLad:L=>{S.lad=JSON.parse(JSON.stringify(L));LKEY='';solve();render()},lad:()=>S.lad,plc:()=>S.plc,PEXS,mkLad,plcRun,plcTransfer,setView,ladClick,LT:o=>Object.assign(LT,o),faults:()=>S.faults,chains:plcChains};
+</script>
+</body>
+</html>
